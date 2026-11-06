@@ -1,0 +1,1709 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simulador de Difusión Atómica en Ingeniería Automotriz</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    /* Estilos personalizados para controles y estética de ingeniería */
+    input[type=range] {
+      accent-color: #3b82f6;
+    }
+    .grid-bg {
+      background-size: 20px 20px;
+      background-image: 
+        linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #4b5563;
+      border-radius: 3px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #1f2937;
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans antialiased selection:bg-blue-600 selection:text-white">
+
+  <!-- ENCABEZADO PRINCIPAL -->
+  <header class="border-b border-slate-800 bg-slate-900/90 backdrop-blur sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 py-3 sm:px-6 flex flex-col md:flex-row justify-between items-center gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-cyan-400 flex items-center justify-center shadow-lg shadow-blue-500/20 text-white font-bold text-xl">
+          ⚙️
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-lg font-bold text-slate-100 tracking-tight">Simulador de Difusión Atómica</h1>
+            <span class="px-2 py-0.5 text-xs font-semibold bg-blue-500/20 text-blue-400 border border-blue-500/30 rounded-full">Ingeniería Automotriz</span>
+          </div>
+          <p class="text-xs text-slate-400">Tratamientos Termoquímicos &bull; Leyes de Fick &bull; Cementación &bull; Nitruración</p>
+        </div>
+      </div>
+
+      <!-- Navegación de Pestañas -->
+      <nav class="flex items-center bg-slate-800/80 p-1 rounded-lg border border-slate-700/60 text-xs sm:text-sm">
+        <button id="tab-sim-btn" onclick="switchTab('sim')" class="px-3 py-1.5 rounded-md font-medium transition-all bg-blue-600 text-white shadow">
+          🔬 Laboratorio Virtual
+        </button>
+        <button id="tab-calc-btn" onclick="switchTab('calc')" class="px-3 py-1.5 rounded-md font-medium text-slate-300 hover:text-white transition-all">
+          📐 Calculadora de Horno
+        </button>
+        <button id="tab-quiz-btn" onclick="switchTab('quiz')" class="px-3 py-1.5 rounded-md font-medium text-slate-300 hover:text-white transition-all">
+          🏆 Retos de Ingeniería
+        </button>
+        <button id="tab-theory-btn" onclick="switchTab('theory')" class="px-3 py-1.5 rounded-md font-medium text-slate-300 hover:text-white transition-all">
+          📖 Fundamentos Teóricos
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- CONTENIDO PRINCIPAL -->
+  <main class="max-w-7xl mx-auto px-4 py-6 sm:px-6">
+
+    <!-- SECCIÓN 1: LABORATORIO VIRTUAL (SIMULADOR PRINCIPAL) -->
+    <div id="tab-sim" class="space-y-6">
+      
+      <!-- Banner de Escenario Automotriz Rápido -->
+      <div class="bg-gradient-to-r from-slate-900 via-slate-850 to-slate-900 border border-slate-800 rounded-2xl p-4 shadow-md flex flex-col md:flex-row items-center justify-between gap-4">
+        <div class="flex items-start gap-3">
+          <div class="p-2.5 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xl">
+            🏎️
+          </div>
+          <div>
+            <h2 class="text-sm font-semibold text-slate-200">Preconfiguraciones de Procesos en la Industria Automotriz</h2>
+            <p class="text-xs text-slate-400">Selecciona un componente automotriz típico para cargar sus parámetros metalúrgicos de difusión:</p>
+          </div>
+        </div>
+        <div class="flex flex-wrap gap-2 w-full md:w-auto">
+          <button onclick="loadPreset('gear_8620')" class="preset-btn px-3 py-1.5 text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg transition-all flex items-center gap-1.5 font-medium">
+            <span>⚙️</span> Engranaje AISI 8620 (930°C)
+          </button>
+          <button onclick="loadPreset('fast_carburizing')" class="preset-btn px-3 py-1.5 text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg transition-all flex items-center gap-1.5 font-medium">
+            <span>🔥</span> Cementación LPC (1000°C)
+          </button>
+          <button onclick="loadPreset('crankshaft_nitriding')" class="preset-btn px-3 py-1.5 text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg transition-all flex items-center gap-1.5 font-medium">
+            <span>⚡</span> Cigüeñal 4140 Nitrurado (520°C)
+          </button>
+          <button onclick="loadPreset('ferrite_carbon')" class="preset-btn px-3 py-1.5 text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg transition-all flex items-center gap-1.5 font-medium">
+            <span>🧊</span> C en Ferrita α-Fe (700°C)
+          </button>
+          <button onclick="loadPreset('self_diff')" class="preset-btn px-3 py-1.5 text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg transition-all flex items-center gap-1.5 font-medium">
+            <span>🔄</span> Autodifusión Fe-γ (Vacancias)
+          </button>
+        </div>
+      </div>
+
+      <!-- Layout de Dos Columnas: Controles y Visualizaciones -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- Panel Izquierdo: Parámetros del Proceso Térmico (4 Cols) -->
+        <div class="lg:col-span-4 space-y-4">
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm space-y-5">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+              <h3 class="text-sm font-bold text-slate-200 flex items-center gap-2">
+                <span>🎛️</span> Variables del Tratamiento Térmico
+              </h3>
+              <button onclick="resetDefaultParameters()" class="text-xs text-blue-400 hover:underline">Restablecer</button>
+            </div>
+
+            <!-- Par Material y Fase Cristalina -->
+            <div>
+              <label class="block text-xs font-medium text-slate-300 mb-1">Mecanismo & Sistema Metalúrgico</label>
+              <select id="system-select" onchange="onSystemSelectChange()" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-blue-500">
+                <option value="C_in_gamma">Carbono en Austenita (Fe-γ, FCC) - Intersticial</option>
+                <option value="C_in_alpha">Carbono en Ferrita (Fe-α, BCC) - Intersticial</option>
+                <option value="N_in_alpha">Nitrógeno en Ferrita (Nitruración) - Intersticial</option>
+                <option value="Fe_in_gamma">Autodifusión de Fe en Austenita - Sustitucional (Vacancias)</option>
+                <option value="Cu_in_Al">Cobre en Aluminio (Homogeneización Al-Cu) - Sustitucional</option>
+                <option value="custom">Personalizado (Definir D0 y Q)</option>
+              </select>
+            </div>
+
+            <!-- Temperatura -->
+            <div class="space-y-1.5">
+              <div class="flex justify-between text-xs">
+                <span class="text-slate-300 font-medium">Temperatura del Horno (T)</span>
+                <span class="text-amber-400 font-mono font-bold" id="temp-val-display">930 °C (1203 K)</span>
+              </div>
+              <input type="range" id="temp-slider" min="450" max="1150" step="5" value="930" oninput="updateSimulation()" class="w-full h-1.5 bg-slate-700 rounded-lg cursor-pointer">
+              <div class="flex justify-between text-[11px] text-slate-500">
+                <span>450 °C (Nitruración)</span>
+                <span>930 °C (Carburizado estándar)</span>
+                <span>1150 °C</span>
+              </div>
+            </div>
+
+            <!-- Tiempo de Permanencia -->
+            <div class="space-y-1.5">
+              <div class="flex justify-between text-xs">
+                <span class="text-slate-300 font-medium">Tiempo de Proceso (t)</span>
+                <span class="text-cyan-400 font-mono font-bold" id="time-val-display">4.0 h (14,400 s)</span>
+              </div>
+              <input type="range" id="time-slider" min="0.25" max="24" step="0.25" value="4.0" oninput="updateSimulation()" class="w-full h-1.5 bg-slate-700 rounded-lg cursor-pointer">
+              <div class="flex justify-between text-[11px] text-slate-500">
+                <span>15 min</span>
+                <span>4 h</span>
+                <span>12 h</span>
+                <span>24 h</span>
+              </div>
+            </div>
+
+            <!-- Concentración Superficial Cs -->
+            <div class="space-y-1.5">
+              <div class="flex justify-between text-xs">
+                <span class="text-slate-300 font-medium">Potencial de Carbono Superficial (Cs)</span>
+                <span class="text-emerald-400 font-mono font-bold" id="cs-val-display">1.00 wt% C</span>
+              </div>
+              <input type="range" id="cs-slider" min="0.1" max="2.0" step="0.05" value="1.0" oninput="updateSimulation()" class="w-full h-1.5 bg-slate-700 rounded-lg cursor-pointer">
+              <p class="text-[11px] text-slate-400">Regulado por el potencial de carbono de la atmósfera del horno (ej. gas endotérmico + CH₄).</p>
+            </div>
+
+            <!-- Concentración Inicial del Núcleo C0 -->
+            <div class="space-y-1.5">
+              <div class="flex justify-between text-xs">
+                <span class="text-slate-300 font-medium">Composición Base del Acero (C₀)</span>
+                <span class="text-indigo-400 font-mono font-bold" id="c0-val-display">0.20 wt% C</span>
+              </div>
+              <input type="range" id="c0-slider" min="0.02" max="0.6" step="0.01" value="0.20" oninput="updateSimulation()" class="w-full h-1.5 bg-slate-700 rounded-lg cursor-pointer">
+              <p class="text-[11px] text-slate-400">Contenido base de carbono del núcleo (ej. AISI 8620 = 0.20% C, AISI 1020 = 0.20% C).</p>
+            </div>
+
+            <!-- Criterio de Capa Endurecida Efectiva (Target Concentration) -->
+            <div class="pt-3 border-t border-slate-800 space-y-1.5">
+              <div class="flex justify-between text-xs">
+                <span class="text-slate-300 font-medium">Criterio Capa Efectiva (Norma SAE J423)</span>
+                <span class="text-yellow-400 font-mono font-bold" id="ctarget-val-display">0.40 wt% C (50 HRC)</span>
+              </div>
+              <input type="range" id="ctarget-slider" min="0.25" max="0.75" step="0.05" value="0.40" oninput="updateSimulation()" class="w-full h-1.5 bg-slate-700 rounded-lg cursor-pointer">
+              <p class="text-[11px] text-slate-500">Profundidad donde la concentración alcanza el umbral de templabilidad mínima para 50 HRC.</p>
+            </div>
+
+            <!-- Parámetros Cinéticos Avanzados (Colapsable) -->
+            <div class="pt-2 border-t border-slate-800">
+              <details class="text-xs group">
+                <summary class="cursor-pointer text-slate-400 hover:text-slate-200 font-medium flex items-center justify-between">
+                  <span>Parámetros de Arrhenius (D₀ y Q)</span>
+                  <span class="group-open:rotate-180 transition-transform">▼</span>
+                </summary>
+                <div class="mt-3 space-y-3 bg-slate-950/60 p-3 rounded-lg border border-slate-800">
+                  <div>
+                    <label class="block text-[11px] text-slate-400">Factor Pre-exponencial D₀ (m²/s):</label>
+                    <input type="number" id="custom-d0" value="2.3e-5" step="1e-6" onchange="onCustomParamChange()" class="w-full bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs text-slate-200 mt-1 font-mono">
+                  </div>
+                  <div>
+                    <label class="block text-[11px] text-slate-400">Energía de Activación Q (kJ/mol):</label>
+                    <input type="number" id="custom-q" value="148" step="1" onchange="onCustomParamChange()" class="w-full bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs text-slate-200 mt-1 font-mono">
+                  </div>
+                  <p class="text-[10px] text-slate-500">Ecuación: D = D₀ &times; exp(-Q / RT), con R = 8.314 J/(mol&middot;K)</p>
+                </div>
+              </details>
+            </div>
+
+          </div>
+
+          <!-- Métricas Cinéticas Clave (Card Resumen) -->
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-sm space-y-3">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400">Resultados Cinéticos & Metalúrgicos</h4>
+            <div class="grid grid-cols-2 gap-3 text-xs">
+              <div class="bg-slate-950/80 p-2.5 rounded-xl border border-slate-800/80">
+                <span class="text-slate-400 block text-[11px]">Coeficiente D(T):</span>
+                <span id="metric-diffusivity" class="text-blue-400 font-mono font-bold text-sm">8.65 &times; 10⁻¹² m²/s</span>
+              </div>
+              <div class="bg-slate-950/80 p-2.5 rounded-xl border border-slate-800/80">
+                <span class="text-slate-400 block text-[11px]">Penetración 2&radic;(Dt):</span>
+                <span id="metric-diff-length" class="text-cyan-400 font-mono font-bold text-sm">0.71 mm</span>
+              </div>
+              <div class="bg-slate-950/80 p-2.5 rounded-xl border border-slate-800/80">
+                <span class="text-slate-400 block text-[11px]">Capa Efectiva (x_eff):</span>
+                <span id="metric-case-depth" class="text-emerald-400 font-mono font-bold text-sm">0.89 mm</span>
+              </div>
+              <div class="bg-slate-950/80 p-2.5 rounded-xl border border-slate-800/80">
+                <span class="text-slate-400 block text-[11px]">Dureza Sup. Est.:</span>
+                <span id="metric-surface-hardness" class="text-amber-400 font-mono font-bold text-sm">63 HRC (~780 HV)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Panel Derecho: Visualizaciones (Gráfica de Difusión y Celda Atómica) (8 Cols) -->
+        <div class="lg:col-span-8 space-y-6">
+
+          <!-- Gráfica de Concentración y Dureza vs Profundidad -->
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+              <div>
+                <h3 class="text-sm font-bold text-slate-200 flex items-center gap-2">
+                  <span>📈</span> Perfil de Concentración y Dureza a Través del Espesor
+                </h3>
+                <p class="text-xs text-slate-400">Solución analítica de la 2ª Ley de Fick: C(x, t) = Cs - (Cs - C₀) &times; erf(x / (2&radic;Dt))</p>
+              </div>
+
+              <!-- Controles de Gráfica -->
+              <div class="flex items-center gap-2">
+                <button id="save-compare-btn" onclick="toggleComparisonCurve()" class="px-2.5 py-1 text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 rounded-md transition-all flex items-center gap-1">
+                  <span>📌</span> <span id="compare-btn-text">Fijar Referencia</span>
+                </button>
+                <button onclick="exportDataCSV()" class="px-2.5 py-1 text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 rounded-md transition-all flex items-center gap-1">
+                  <span>📥</span> CSV
+                </button>
+              </div>
+            </div>
+
+            <!-- Contenedor del Gráfico SVG Interactivo -->
+            <div class="relative w-full bg-slate-950 border border-slate-800/80 rounded-xl p-2 select-none overflow-hidden">
+              <svg id="diffusion-chart-svg" viewBox="0 0 750 360" class="w-full h-auto cursor-crosshair">
+                <!-- Se genera dinámicamente con JavaScript -->
+              </svg>
+
+              <!-- Tooltip Interactivo -->
+              <div id="chart-tooltip" class="absolute hidden bg-slate-900/95 border border-slate-700 text-xs p-2.5 rounded-lg shadow-xl pointer-events-none transition-opacity duration-150 backdrop-blur">
+                <div class="font-bold text-slate-200 mb-1" id="tt-depth">Profundidad: 0.00 mm</div>
+                <div class="text-emerald-400 font-mono" id="tt-conc">Concentración: 0.00 wt%</div>
+                <div class="text-amber-400 font-mono" id="tt-hrc">Dureza est.: 0 HRC</div>
+                <div class="text-cyan-400 font-mono text-[11px]" id="tt-flux">Flujo J: 0.00 &times; 10⁻⁶</div>
+              </div>
+            </div>
+
+            <!-- Leyenda explicativa interactiva -->
+            <div class="flex flex-wrap items-center justify-between text-xs text-slate-400 px-1 gap-2 border-t border-slate-800/60 pt-2">
+              <div class="flex items-center gap-4">
+                <span class="flex items-center gap-1.5">
+                  <span class="w-3.5 h-1 bg-emerald-400 rounded-full inline-block"></span>
+                  <span>Perfil C(x,t)</span>
+                </span>
+                <span class="flex items-center gap-1.5">
+                  <span class="w-3.5 h-1 bg-amber-400/80 border-t border-dashed rounded-full inline-block"></span>
+                  <span>Dureza estimada (HRC)</span>
+                </span>
+                <span id="ref-legend-item" class="hidden flex items-center gap-1.5">
+                  <span class="w-3.5 h-1 bg-purple-400 rounded-full inline-block"></span>
+                  <span>Curva Fijada</span>
+                </span>
+                <span class="flex items-center gap-1.5">
+                  <span class="w-3.5 h-0.5 bg-yellow-400 border-t border-dashed inline-block"></span>
+                  <span>Umbral Capa Efectiva</span>
+                </span>
+              </div>
+              <div class="text-slate-500 text-[11px]">
+                Arrastra el cursor sobre el gráfico para inspeccionar puntos específicos
+              </div>
+            </div>
+          </div>
+
+          <!-- Animación Microscópica: Simulación de Saltos Atómicos en la Red -->
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm space-y-3">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+              <div>
+                <h3 class="text-sm font-bold text-slate-200 flex items-center gap-2">
+                  <span>⚛️</span> Dinámica Atómica en Tiempo Real (Malla Cristalina & Difusión)
+                </h3>
+                <p class="text-xs text-slate-400">Observa cómo la agitación térmica y las barreras de energía activan los saltos del soluto.</p>
+              </div>
+              <div class="flex items-center gap-2">
+                <button id="lattice-anim-toggle" onclick="toggleAnimation()" class="px-3 py-1 text-xs bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-lg transition-all flex items-center gap-1">
+                  <span id="anim-play-icon">⏸️</span> <span id="anim-play-text">Pausar</span>
+                </button>
+                <button onclick="resetAtoms()" class="px-2.5 py-1 text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 rounded-lg transition-all">
+                  Reiniciar Red
+                </button>
+              </div>
+            </div>
+
+            <!-- Canvas de la Celda Cristalina -->
+            <div class="relative w-full h-56 bg-slate-950 rounded-xl border border-slate-800 overflow-hidden grid-bg">
+              <canvas id="lattice-canvas" class="w-full h-full block"></canvas>
+              
+              <!-- Superposiciones de Información de la Red -->
+              <div class="absolute top-2 left-2 bg-slate-900/80 backdrop-blur px-2.5 py-1 rounded-lg border border-slate-800 text-[11px] text-slate-300 flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span>Superficie expuesta al gas carburante</span>
+                <span class="text-slate-500">&rarr; Flujo de difusión hacia el interior</span>
+              </div>
+
+              <div class="absolute bottom-2 right-2 bg-slate-900/85 backdrop-blur px-2.5 py-1 rounded-lg border border-slate-800 text-[11px] text-slate-300 flex items-center gap-3">
+                <div class="flex items-center gap-1">
+                  <span class="w-3 h-3 rounded-full bg-blue-500 inline-block"></span>
+                  <span class="text-slate-400">Átomo de Red (Fe)</span>
+                </div>
+                <div class="flex items-center gap-1">
+                  <span class="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block shadow-sm shadow-rose-500/50"></span>
+                  <span class="text-slate-400">Soluto Difusor (C/N)</span>
+                </div>
+                <div class="flex items-center gap-1">
+                  <span class="w-2.5 h-2.5 rounded-full border border-dashed border-slate-400 inline-block"></span>
+                  <span class="text-slate-400">Intersticio / Vacancia</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs pt-1">
+              <div class="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800">
+                <span class="text-slate-400 block text-[11px]">Frecuencia de Salto (&Gamma;):</span>
+                <span id="metric-jump-freq" class="text-rose-400 font-mono font-bold">~1.4 &times; 10¹⁰ saltos/s</span>
+              </div>
+              <div class="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800">
+                <span class="text-slate-400 block text-[11px]">Tipo de Red Cristalina:</span>
+                <span id="metric-lattice-type" class="text-cyan-400 font-mono font-bold">Austenita (FCC, factor 0.74)</span>
+              </div>
+              <div class="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800">
+                <span class="text-slate-400 block text-[11px]">Vibración Térmica (kT):</span>
+                <span id="metric-thermal-energy" class="text-amber-400 font-mono font-bold">0.104 eV / átomo</span>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- SECCIÓN 2: CALCULADORA DE HORNO INDUSTRIAL AUTOMOTRIZ (INVERSA) -->
+    <div id="tab-calc" class="hidden space-y-6">
+      
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-sm">
+        <div class="max-w-3xl">
+          <h2 class="text-lg font-bold text-slate-100 flex items-center gap-2">
+            <span>🏭</span> Dimensionamiento de Ciclos Térmicos en Planta Automotriz
+          </h2>
+          <p class="text-xs text-slate-400 mt-1">
+            Herramienta para ingenieros de procesos térmicos: calcula el tiempo exacto de ciclo de horno requerido para alcanzar la especificación de dibujo técnico de una pieza automotriz.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mt-6">
+          
+          <!-- Formulario de Requisitos de Dibujo Técnico -->
+          <div class="bg-slate-950 border border-slate-800 rounded-xl p-5 space-y-4">
+            <h3 class="text-sm font-semibold text-blue-400 flex items-center gap-2">
+              <span>📋</span> Especificación Técnica de Dibujo (Blueprint)
+            </h3>
+
+            <div>
+              <label class="block text-xs font-medium text-slate-300 mb-1">Componente Automotriz:</label>
+              <select id="calc-part-preset" onchange="applyCalcPartPreset()" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-200">
+                <option value="diff_pinion">Piñón de ataque de diferencial (AISI 8620) - Capa: 1.20 mm</option>
+                <option value="trans_gear">Engranaje 3ª marcha transmisión manual (AISI 5120) - Capa: 0.80 mm</option>
+                <option value="camshaft">Árbol de levas / Leva de admisión (AISI 1020) - Capa: 1.50 mm</option>
+                <option value="steering_rack">Eje de cremallera de dirección asistida - Capa: 0.60 mm</option>
+                <option value="custom">Entrada de Parámetros Libre</option>
+              </select>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1">Profundidad Objetivo (mm):</label>
+                <input type="number" id="calc-target-x" value="1.20" step="0.05" min="0.1" max="5.0" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-200 font-mono">
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1">Criterio C(x) deseado (wt%):</label>
+                <input type="number" id="calc-target-c" value="0.40" step="0.01" min="0.25" max="0.8" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-200 font-mono">
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1">Potencial Cs (wt%):</label>
+                <input type="number" id="calc-cs" value="1.00" step="0.05" min="0.5" max="1.5" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-200 font-mono">
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1">Acero Base C₀ (wt%):</label>
+                <input type="number" id="calc-c0" value="0.20" step="0.01" min="0.1" max="0.4" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-200 font-mono">
+              </div>
+            </div>
+
+            <!-- Comparación de 2 Temperaturas de Horno -->
+            <div class="pt-3 border-t border-slate-800 space-y-3">
+              <label class="block text-xs font-semibold text-slate-200">Comparativa de Operación del Horno:</label>
+              <div class="grid grid-cols-2 gap-3">
+                <div class="bg-slate-900 p-2.5 rounded-lg border border-slate-800">
+                  <span class="text-xs text-slate-400 block mb-1">Opción A (Convencional):</span>
+                  <div class="flex items-center gap-1">
+                    <input type="number" id="calc-temp-a" value="910" step="5" min="800" max="1150" class="w-20 bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs text-amber-400 font-mono">
+                    <span class="text-xs text-slate-400">°C</span>
+                  </div>
+                </div>
+                <div class="bg-slate-900 p-2.5 rounded-lg border border-slate-800">
+                  <span class="text-xs text-slate-400 block mb-1">Opción B (Alta Temp. / LPC):</span>
+                  <div class="flex items-center gap-1">
+                    <input type="number" id="calc-temp-b" value="960" step="5" min="800" max="1150" class="w-20 bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs text-rose-400 font-mono">
+                    <span class="text-xs text-slate-400">°C</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <button onclick="calculateFurnaceTime()" class="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs rounded-xl shadow-lg shadow-blue-500/20 transition-all flex items-center justify-center gap-2">
+              <span>⚡</span> Ejecutar Cálculo Analítico Inverso
+            </button>
+          </div>
+
+          <!-- Resultados y Análisis de Costes / Tiempo -->
+          <div class="space-y-4">
+            
+            <div class="bg-gradient-to-br from-slate-900 to-slate-950 border border-slate-800 rounded-xl p-5 space-y-4">
+              <h3 class="text-sm font-semibold text-slate-200 flex items-center gap-2">
+                <span>⏱️</span> Tiempos de Tratamiento Requeridos
+              </h3>
+
+              <div class="grid grid-cols-2 gap-4">
+                <div class="bg-slate-950 p-4 rounded-xl border border-amber-500/30">
+                  <span class="text-xs text-amber-400 font-medium block">Horno a <span id="res-temp-a-lbl">910</span>°C</span>
+                  <div class="mt-2">
+                    <span id="calc-res-time-a" class="text-2xl font-bold font-mono text-slate-100">7.24</span>
+                    <span class="text-xs text-slate-400">horas</span>
+                  </div>
+                  <span id="calc-res-time-a-min" class="text-xs text-slate-500 block mt-1">(434 minutos)</span>
+                </div>
+
+                <div class="bg-slate-950 p-4 rounded-xl border border-rose-500/30">
+                  <span class="text-xs text-rose-400 font-medium block">Horno a <span id="res-temp-b-lbl">960</span>°C</span>
+                  <div class="mt-2">
+                    <span id="calc-res-time-b" class="text-2xl font-bold font-mono text-slate-100">3.71</span>
+                    <span class="text-xs text-slate-400">horas</span>
+                  </div>
+                  <span id="calc-res-time-b-min" class="text-xs text-slate-500 block mt-1">(223 minutos)</span>
+                </div>
+              </div>
+
+              <!-- Ahorro de Tiempo -->
+              <div class="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-xs text-emerald-300 flex items-center justify-between">
+                <div>
+                  <span class="font-bold text-sm block" id="calc-saving-percent">Ahorro de Tiempo: 48.8%</span>
+                  <span class="text-slate-400 text-[11px]" id="calc-saving-desc">Aumentar 50 °C reduce el ciclo en 3 horas y 31 minutos.</span>
+                </div>
+                <div class="text-2xl font-bold text-emerald-400">⏳⚡</div>
+              </div>
+            </div>
+
+            <!-- Consideraciones Metalúrgicas y Riesgos de Ingeniería -->
+            <div class="bg-slate-950 border border-slate-800 rounded-xl p-5 space-y-2 text-xs">
+              <h4 class="font-bold text-amber-400 flex items-center gap-1.5">
+                <span>⚠️</span> Consideraciones de Ingeniería para Producción en Masa:
+              </h4>
+              <ul class="list-disc list-inside space-y-1.5 text-slate-300">
+                <li>
+                  <strong class="text-slate-100">Crecimiento de Grano Austenítico:</strong> Operar por encima de 950 °C acelera exponencialmente la difusión, pero puede inducir crecimiento de grano ASTM si el acero no posee microaleantes inhibidores como Vanadio (V), Titanio (Ti) o Niobio (Nb).
+                </li>
+                <li>
+                  <strong class="text-slate-100">Distorsión Geométrica:</strong> Temperaturas más elevadas generan mayor riesgo de alabeo en dientes de engranajes helicoidales finos, requiriendo rectificado posterior más costoso.
+                </li>
+                <li>
+                  <strong class="text-slate-100">Consumo Energético y Vida del Refractario:</strong> El balance térmico entre menor tiempo de residencia vs mayor degradación de elementos calefactores debe evaluarse en el OEE de la planta automotriz.
+                </li>
+              </ul>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- SECCIÓN 3: RETOS DE INGENIERÍA Y EVALUACIÓN INTERACTIVA -->
+    <div id="tab-quiz" class="hidden space-y-6">
+      
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-sm">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pb-4 border-b border-slate-800">
+          <div>
+            <h2 class="text-lg font-bold text-slate-100 flex items-center gap-2">
+              <span>🏆</span> Casos de Estudio & Retos para Evaluación Universitaria
+            </h2>
+            <p class="text-xs text-slate-400">Pon a prueba tus conocimientos de ingeniería de materiales automotrices y difusión atómica.</p>
+          </div>
+          <div class="flex items-center gap-3">
+            <span class="text-xs text-slate-400">Puntaje:</span>
+            <span id="quiz-score" class="px-3 py-1 bg-blue-500/20 text-blue-400 border border-blue-500/30 rounded-full font-mono font-bold text-sm">0 / 4</span>
+          </div>
+        </div>
+
+        <div class="space-y-6 mt-6">
+          
+          <!-- Reto 1 -->
+          <div class="bg-slate-950 border border-slate-800 rounded-xl p-5 space-y-3" id="quiz-card-1">
+            <div class="flex justify-between items-start">
+              <span class="text-xs font-semibold px-2 py-0.5 rounded bg-blue-500/20 text-blue-400">Caso 1: Transmisiones Manuales</span>
+              <span id="badge-q1" class="text-xs font-medium text-slate-500">Pendiente</span>
+            </div>
+            <h4 class="text-sm font-semibold text-slate-200">
+              ¿Por qué el proceso de cementación (carburizado) de engranes de transmisión de acero AISI 8620 se efectúa a 930 °C (fase austenítica &gamma;) y no a 680 °C (fase ferrítica &alpha;), a pesar de que el coeficiente de difusión en ferrita suele ser numéricamente mayor?
+            </h4>
+            <div class="space-y-2 text-xs">
+              <label class="flex items-start gap-3 p-3 rounded-lg border border-slate-800 bg-slate-900/60 hover:bg-slate-800 cursor-pointer">
+                <input type="radio" name="q1" value="a" class="mt-0.5">
+                <span>Porque la solubilidad máxima de carbono en la red FCC austenítica es de hasta ~2.14 wt%, mientras que en la red BCC ferrítica es de apenas ~0.022 wt%, impidiendo formar una capa rica en carbono capaz de alcanzar 60 HRC tras el temple.</span>
+              </label>
+              <label class="flex items-start gap-3 p-3 rounded-lg border border-slate-800 bg-slate-900/60 hover:bg-slate-800 cursor-pointer">
+                <input type="radio" name="q1" value="b" class="mt-0.5">
+                <span>Porque a 680 °C el acero se funde debido a la presencia de metano en el horno.</span>
+              </label>
+              <label class="flex items-start gap-3 p-3 rounded-lg border border-slate-800 bg-slate-900/60 hover:bg-slate-800 cursor-pointer">
+                <input type="radio" name="q1" value="c" class="mt-0.5">
+                <span>Porque el hierro en fase ferrítica repele electrostáticamente a los átomos de carbono libres.</span>
+              </label>
+            </div>
+            <div class="flex justify-between items-center pt-2">
+              <button onclick="checkQuestion(1, 'a')" class="px-4 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-medium transition-all">Verificar Respuesta</button>
+              <div id="feedback-q1" class="text-xs hidden"></div>
+            </div>
+          </div>
+
+          <!-- Reto 2 -->
+          <div class="bg-slate-950 border border-slate-800 rounded-xl p-5 space-y-3" id="quiz-card-2">
+            <div class="flex justify-between items-start">
+              <span class="text-xs font-semibold px-2 py-0.5 rounded bg-blue-500/20 text-blue-400">Caso 2: Cigüeñales de Competición</span>
+              <span id="badge-q2" class="text-xs font-medium text-slate-500">Pendiente</span>
+            </div>
+            <h4 class="text-sm font-semibold text-slate-200">
+              Para el muñón de un cigüeñal de motor V8 fabricado en acero 4340, se requiere máxima precisión dimensional y alta resistencia a la fatiga. ¿Por qué se prefiere un tratamiento de Nitruración a 520 °C en lugar de Cementación a 930 °C?
+            </h4>
+            <div class="space-y-2 text-xs">
+              <label class="flex items-start gap-3 p-3 rounded-lg border border-slate-800 bg-slate-900/60 hover:bg-slate-800 cursor-pointer">
+                <input type="radio" name="q2" value="a" class="mt-0.5">
+                <span>Porque el nitrógeno es un elemento más barato que el gas metano.</span>
+              </label>
+              <label class="flex items-start gap-3 p-3 rounded-lg border border-slate-800 bg-slate-900/60 hover:bg-slate-800 cursor-pointer">
+                <input type="radio" name="q2" value="b" class="mt-0.5">
+                <span>Porque al nitrurar a 520 °C (fase ferrítica, por debajo de A₁), la pieza no experimenta cambio de fase austenita&rarr;martensita ni requiere enfriamiento brusco (temple en aceite), eliminando alabeos y distorsiones residuales en el cigüeñal.</span>
+              </label>
+              <label class="flex items-start gap-3 p-3 rounded-lg border border-slate-800 bg-slate-900/60 hover:bg-slate-800 cursor-pointer">
+                <input type="radio" name="q2" value="c" class="mt-0.5">
+                <span>Porque la nitruración penetra más de 10 mm en cuestión de 5 minutos.</span>
+              </label>
+            </div>
+            <div class="flex justify-between items-center pt-2">
+              <button onclick="checkQuestion(2, 'b')" class="px-4 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-medium transition-all">Verificar Respuesta</button>
+              <div id="feedback-q2" class="text-xs hidden"></div>
+            </div>
+          </div>
+
+          <!-- Reto 3 -->
+          <div class="bg-slate-950 border border-slate-800 rounded-xl p-5 space-y-3" id="quiz-card-3">
+            <div class="flex justify-between items-start">
+              <span class="text-xs font-semibold px-2 py-0.5 rounded bg-blue-500/20 text-blue-400">Caso 3: Regla Cuadrática del Tiempo (Fick II)</span>
+              <span id="badge-q3" class="text-xs font-medium text-slate-500">Pendiente</span>
+            </div>
+            <h4 class="text-sm font-semibold text-slate-200">
+              Un piñón de caja de transferencia alcanza una profundidad de capa efectiva de 0.8 mm tras 4 horas a 920 °C. Si el cliente requiere duplicar la profundidad a 1.6 mm a la misma temperatura, ¿cuánto tiempo total debe permanecer en el horno?
+            </h4>
+            <div class="space-y-2 text-xs">
+              <label class="flex items-start gap-3 p-3 rounded-lg border border-slate-800 bg-slate-900/60 hover:bg-slate-800 cursor-pointer">
+                <input type="radio" name="q3" value="a" class="mt-0.5">
+                <span>8 horas (relación lineal con la profundidad x &prop; t).</span>
+              </label>
+              <label class="flex items-start gap-3 p-3 rounded-lg border border-slate-800 bg-slate-900/60 hover:bg-slate-800 cursor-pointer">
+                <input type="radio" name="q3" value="b" class="mt-0.5">
+                <span>16 horas, debido a que la profundidad de penetración responde a la ley de difusión x &prop; &radic;(Dt), por lo que duplicar x (2&times;) exige cuadruplicar el tiempo (2² = 4 &times; 4 h = 16 h).</span>
+              </label>
+              <label class="flex items-start gap-3 p-3 rounded-lg border border-slate-800 bg-slate-900/60 hover:bg-slate-800 cursor-pointer">
+                <input type="radio" name="q3" value="c" class="mt-0.5">
+                <span>6 horas, por efecto de la saturación del gradiente dC/dx.</span>
+              </label>
+            </div>
+            <div class="flex justify-between items-center pt-2">
+              <button onclick="checkQuestion(3, 'b')" class="px-4 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-medium transition-all">Verificar Respuesta</button>
+              <div id="feedback-q3" class="text-xs hidden"></div>
+            </div>
+          </div>
+
+          <!-- Reto 4 -->
+          <div class="bg-slate-950 border border-slate-800 rounded-xl p-5 space-y-3" id="quiz-card-4">
+            <div class="flex justify-between items-start">
+              <span class="text-xs font-semibold px-2 py-0.5 rounded bg-blue-500/20 text-blue-400">Caso 4: Mecanismos Intersticial vs Sustitucional</span>
+              <span id="badge-q4" class="text-xs font-medium text-slate-500">Pendiente</span>
+            </div>
+            <h4 class="text-sm font-semibold text-slate-200">
+              ¿Por qué la energía de activación para la difusión del Carbono en acero austenítico es de aprox. 148 kJ/mol, mientras que para elementos de aleación sustitucionales como Níquel (Ni) o Cromo (Cr) o la autodifusión del Hierro supera los 280 kJ/mol?
+            </h4>
+            <div class="space-y-2 text-xs">
+              <label class="flex items-start gap-3 p-3 rounded-lg border border-slate-800 bg-slate-900/60 hover:bg-slate-800 cursor-pointer">
+                <input type="radio" name="q4" value="a" class="mt-0.5">
+                <span>Porque la difusión intersticial solo requiere la energía para mover un átomo pequeño entre huecos contiguos (Q_m), mientras que la difusión sustitucional requiere tanto la energía de formación de una vacancia (Q_v) como la de movimiento (Q_m), es decir Q = Q_v + Q_m.</span>
+              </label>
+              <label class="flex items-start gap-3 p-3 rounded-lg border border-slate-800 bg-slate-900/60 hover:bg-slate-800 cursor-pointer">
+                <input type="radio" name="q4" value="b" class="mt-0.5">
+                <span>Porque el Cromo y el Níquel son magnéticos y quedan atrapados en los polos del horno.</span>
+              </label>
+              <label class="flex items-start gap-3 p-3 rounded-lg border border-slate-800 bg-slate-900/60 hover:bg-slate-800 cursor-pointer">
+                <input type="radio" name="q4" value="c" class="mt-0.5">
+                <span>Porque el carbono no interactúa con los electrones de valencia del hierro.</span>
+              </label>
+            </div>
+            <div class="flex justify-between items-center pt-2">
+              <button onclick="checkQuestion(4, 'a')" class="px-4 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-medium transition-all">Verificar Respuesta</button>
+              <div id="feedback-q4" class="text-xs hidden"></div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- SECCIÓN 4: FUNDAMENTOS TEÓRICOS Y METALÚRGICOS -->
+    <div id="tab-theory" class="hidden space-y-6">
+      
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-sm space-y-6">
+        <div>
+          <h2 class="text-lg font-bold text-slate-100 flex items-center gap-2">
+            <span>📖</span> Fundamentos Físico-Químicos de la Difusión en Metalurgia Automotriz
+          </h2>
+          <p class="text-xs text-slate-400 mt-1">
+            Manual de referencia y deducciones matemáticas aplicadas a tratamientos térmicos de componentes vehiculares.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs text-slate-300">
+          
+          <!-- Fick I y Fick II -->
+          <div class="bg-slate-950 p-5 rounded-xl border border-slate-800 space-y-3">
+            <h3 class="text-sm font-bold text-blue-400 flex items-center gap-1.5">
+              <span>1️⃣</span> Primera y Segunda Ley de Fick
+            </h3>
+            <p>
+              La <strong class="text-slate-100">Primera Ley de Fick</strong> describe el régimen estacionario, donde el flujo difusional neto <em>J</em> es proporcional al gradiente de concentración:
+            </p>
+            <div class="bg-slate-900 p-3 rounded-lg border border-slate-800 text-center font-mono text-cyan-300 text-sm">
+              J = - D &times; (&part;C / &part;x)
+            </div>
+            <p>
+              Donde <em>J</em> es el flujo [átomos/(m²&middot;s) o kg/(m²&middot;s)], <em>D</em> es la difusividad [m²/s] y <em>&part;C/&part;x</em> es el gradiente. El signo negativo indica que la materia fluye de alta a baja concentración.
+            </p>
+            <p>
+              En procesos automotrices como cementación, la concentración varía continuamente con el tiempo (régimen transitorio o no estacionario), gobernado por la <strong class="text-slate-100">Segunda Ley de Fick</strong>:
+            </p>
+            <div class="bg-slate-900 p-3 rounded-lg border border-slate-800 text-center font-mono text-cyan-300 text-sm">
+              &part;C / &part;t = D &times; (&part;²C / &part;x²)
+            </div>
+          </div>
+
+          <!-- Solución Función Error y Condiciones de Frontera -->
+          <div class="bg-slate-950 p-5 rounded-xl border border-slate-800 space-y-3">
+            <h3 class="text-sm font-bold text-emerald-400 flex items-center gap-1.5">
+              <span>2️⃣</span> Solución con Función Error de Gauss (erf)
+            </h3>
+            <p>
+              Para una pieza automotriz maciza (semi-infinita) con concentración inicial uniforme <em>C₀</em> sometida a una atmósfera gaseosa con concentración superficial constante <em>C_s</em>:
+            </p>
+            <div class="bg-slate-900 p-3 rounded-lg border border-slate-800 text-center font-mono text-emerald-300 text-sm">
+              (C(x, t) - C₀) / (C_s - C₀) = 1 - erf( x / (2&radic;(Dt)) )
+            </div>
+            <p>
+              O despejando la concentración en el punto <em>x</em> a tiempo <em>t</em>:
+            </p>
+            <div class="bg-slate-900 p-3 rounded-lg border border-slate-800 text-center font-mono text-emerald-300 text-sm">
+              C(x, t) = C_s - (C_s - C₀) &times; erf( x / (2&radic;(Dt)) )
+            </div>
+            <p class="text-[11px] text-slate-400">
+              La función de error gaussiana está definida por: <em>erf(z) = (2/&radic;&pi;) &int;₀ᶻ exp(-&eta;²) d&eta;</em>, donde <em>erf(0) = 0</em> y <em>erf(&infin;) = 1</em>.
+            </p>
+          </div>
+
+          <!-- Ecuación de Arrhenius -->
+          <div class="bg-slate-950 p-5 rounded-xl border border-slate-800 space-y-3">
+            <h3 class="text-sm font-bold text-amber-400 flex items-center gap-1.5">
+              <span>3️⃣</span> Dependencia Térmica de Arrhenius
+            </h3>
+            <p>
+              La velocidad de difusión depende de la energía cinética térmica de los átomos para superar la barrera de potencial de la red cristalina:
+            </p>
+            <div class="bg-slate-900 p-3 rounded-lg border border-slate-800 text-center font-mono text-amber-300 text-sm">
+              D(T) = D₀ &times; exp( - Q / (R &times; T) )
+            </div>
+            <ul class="list-disc list-inside space-y-1 text-slate-400">
+              <li><strong class="text-slate-200">D₀:</strong> Factor de frecuencia o pre-exponencial [m²/s].</li>
+              <li><strong class="text-slate-200">Q:</strong> Energía de activación molar para la difusión [J/mol].</li>
+              <li><strong class="text-slate-200">R:</strong> Constante universal de los gases = 8.314 J/(mol&middot;K).</li>
+              <li><strong class="text-slate-200">T:</strong> Temperatura absoluta en Kelvin [K = °C + 273.15].</li>
+            </ul>
+          </div>
+
+          <!-- Normas Automotrices y Dureza -->
+          <div class="bg-slate-950 p-5 rounded-xl border border-slate-800 space-y-3">
+            <h3 class="text-sm font-bold text-rose-400 flex items-center gap-1.5">
+              <span>4️⃣</span> Criterios de Calidad Automotriz (SAE J423 / ISO 2639)
+            </h3>
+            <p>
+              En la producción de engranes de transmisión y coronas hipoidales, se distinguen dos términos fundamentales:
+            </p>
+            <ul class="list-disc list-inside space-y-2 text-slate-400">
+              <li>
+                <strong class="text-slate-200">Profundidad Total de Capa (Total Case Depth):</strong> Distancia perpendicular desde la superficie hasta donde la concentración de carbono se iguala a la concentración original del núcleo (<em>C = C₀</em>).
+              </li>
+              <li>
+                <strong class="text-slate-200">Profundidad Efectiva de Capa (Effective Case Depth):</strong> Distancia perpendicular desde la superficie hasta el punto donde la dureza tras temple y revenido cae a <strong class="text-slate-100">50 HRC (~513 HV)</strong>, lo cual se corresponde típicamente con <strong class="text-slate-100">0.40 wt% de Carbono</strong> en aceros aleados automotrices.
+              </li>
+            </ul>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- PIE DE PÁGINA -->
+  <footer class="border-t border-slate-800/80 mt-12 py-6 text-center text-xs text-slate-500">
+    <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+      <div class="flex items-center gap-2">
+        <span class="text-blue-500 font-bold">Simulador Metalúrgico Automotriz</span>
+        <span>&bull;</span>
+        <span>Educación Superior en Ciencia e Ingeniería de Materiales</span>
+      </div>
+      <div>
+        <span>Basado en normas SAE J423, ISO 2639 y soluciones analíticas de Fick</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- LÓGICA JAVASCRIPT DEL SIMULADOR -->
+  <script>
+    // ==========================================
+    // 1. CONSTANTES FÍSICAS Y BASES DE DATOS METALÚRGICAS
+    // ==========================================
+    const R_GAS = 8.31446; // J/(mol * K)
+
+    const MATERIAL_SYSTEMS = {
+      C_in_gamma: {
+        name: "Carbono en Austenita (Fe-γ, FCC)",
+        D0: 2.3e-5,       // m^2/s
+        Q: 148000,        // J/mol (148 kJ/mol)
+        mechanism: "interstitial",
+        lattice: "FCC",
+        solubilityLimit: 2.14,
+        typicalTemp: 930,
+        defaultCs: 1.00,
+        defaultC0: 0.20,
+        description: "Engranajes de caja de cambios, piñones de diferencial (AISI 8620, 5120, 20MnCr5)."
+      },
+      C_in_alpha: {
+        name: "Carbono en Ferrita (Fe-α, BCC)",
+        D0: 6.2e-7,       // m^2/s
+        Q: 80000,         // J/mol (80 kJ/mol)
+        mechanism: "interstitial",
+        lattice: "BCC",
+        solubilityLimit: 0.022,
+        typicalTemp: 700,
+        defaultCs: 0.022,
+        defaultC0: 0.005,
+        description: "Envejecimiento dinámico, aceros de embutición profunda automotriz IF (Interstitial-Free)."
+      },
+      N_in_alpha: {
+        name: "Nitrógeno en Ferrita (Nitruración)",
+        D0: 4.88e-7,      // m^2/s
+        Q: 76600,         // J/mol (76.6 kJ/mol)
+        mechanism: "interstitial",
+        lattice: "BCC",
+        solubilityLimit: 0.45,
+        typicalTemp: 520,
+        defaultCs: 0.45,
+        defaultC0: 0.00,
+        description: "Cigüeñales, árboles de levas, anillos de pistón sin distorsión (4140, 4340 nitrurados)."
+      },
+      Fe_in_gamma: {
+        name: "Autodifusión de Fe en Austenita (Fe-γ)",
+        D0: 6.5e-5,       // m^2/s
+        Q: 279000,        // J/mol (279 kJ/mol)
+        mechanism: "substitutional",
+        lattice: "FCC",
+        solubilityLimit: 100,
+        typicalTemp: 950,
+        defaultCs: 100,
+        defaultC0: 0,
+        description: "Sinterización de metalurgia de polvos, forja a alta temperatura, creep en turbocompresores."
+      },
+      Cu_in_Al: {
+        name: "Cobre en Aluminio (Homogeneización Al-Cu)",
+        D0: 6.5e-5,       // m^2/s
+        Q: 136000,        // J/mol (136 kJ/mol)
+        mechanism: "substitutional",
+        lattice: "FCC",
+        solubilityLimit: 5.65,
+        typicalTemp: 500,
+        defaultCs: 4.5,
+        defaultC0: 1.0,
+        description: "Tratamiento de solubilización T6 en culatas y monobloques de motor de aluminio A356/A319."
+      },
+      custom: {
+        name: "Personalizado",
+        D0: 2.3e-5,
+        Q: 148000,
+        mechanism: "interstitial",
+        lattice: "FCC",
+        solubilityLimit: 2.0,
+        typicalTemp: 930,
+        defaultCs: 1.0,
+        defaultC0: 0.2,
+        description: "Parámetros definidos por el usuario."
+      }
+    };
+
+    // Estado Global de la Simulación
+    let currentSystemKey = "C_in_gamma";
+    let currentT = 930;    // °C
+    let currentT_hours = 4.0; // Horas
+    let currentCs = 1.00; // wt%
+    let currentC0 = 0.20; // wt%
+    let currentCtarget = 0.40; // wt%
+    let customD0 = 2.3e-5;
+    let customQ = 148000;
+
+    // Curva de comparación guardada
+    let savedCurve = null;
+
+    // Estado de la animación atómica
+    let animRunning = true;
+    let animFrameId = null;
+    let atoms = [];
+    let latticeMatrix = [];
+
+    // ==========================================
+    // 2. MATEMÁTICAS: FUNCIÓN ERROR Y LEYES DE FICK
+    // ==========================================
+    // Aproximación polinomial de Abramowitz & Stegun 7.1.26 (precisión < 1.5e-7)
+    function mathErf(x) {
+      if (isNaN(x)) return 0;
+      let sign = x >= 0 ? 1 : -1;
+      x = Math.abs(x);
+      
+      const a1 =  0.254829592;
+      const a2 = -0.284496736;
+      const a3 =  1.421413741;
+      const a4 = -1.453152027;
+      const a5 =  1.061405429;
+      const p  =  0.3275911;
+
+      const t = 1.0 / (1.0 + p * x);
+      const y = 1.0 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * Math.exp(-x * x);
+      return sign * y;
+    }
+
+    // Inversa de la función de error erf^-1(y) mediante aproximación de Winitzki
+    function mathErfInv(y) {
+      if (y <= -1) return -Infinity;
+      if (y >= 1) return Infinity;
+      const a = 0.147;
+      const logTerm = Math.log(1.0 - y * y);
+      const term1 = 2.0 / (Math.PI * a) + logTerm / 2.0;
+      const term2 = logTerm / a;
+      const inner = term1 * term1 - term2;
+      const sign = y < 0 ? -1 : 1;
+      return sign * Math.sqrt(Math.sqrt(inner) - term1);
+    }
+
+    // Cálculo del Coeficiente de Difusión Arrhenius D(T) [m^2/s]
+    function calculateDiffusivity(T_celsius, d0, q_joules) {
+      const T_kelvin = T_celsius + 273.15;
+      return d0 * Math.exp(-q_joules / (R_GAS * T_kelvin));
+    }
+
+    // Concentración C(x, t) en función de la profundidad x [m] y tiempo t [s]
+    function calculateConcentration(x_meters, t_seconds, D, Cs, C0) {
+      if (t_seconds <= 0 || D <= 0) return C0;
+      const denom = 2.0 * Math.sqrt(D * t_seconds);
+      const z = x_meters / denom;
+      const erfVal = mathErf(z);
+      return Cs - (Cs - C0) * erfVal;
+    }
+
+    // Estimación empírica de dureza as-quenched / revenida para aceros automotrices (HRC)
+    function estimateHardnessHRC(carbonWeightPct) {
+      if (carbonWeightPct < 0.05) return 20;
+      if (carbonWeightPct <= 0.8) {
+        // Correlación de dureza martensítica SAE en función del %C
+        const hrc = 18 + 52 * Math.sqrt(carbonWeightPct);
+        return Math.min(65, Math.max(20, Math.round(hrc)));
+      } else {
+        // Por encima de 0.8% C, la austenita retenida estabiliza la dureza o la reduce levemente
+        return 63;
+      }
+    }
+
+    // ==========================================
+    // 3. ACTUALIZACIÓN DE LA SIMULACIÓN
+    // ==========================================
+    function updateSimulation() {
+      // Lectura de controles
+      currentT = parseFloat(document.getElementById("temp-slider").value);
+      currentT_hours = parseFloat(document.getElementById("time-slider").value);
+      currentCs = parseFloat(document.getElementById("cs-slider").value);
+      currentC0 = parseFloat(document.getElementById("c0-slider").value);
+      currentCtarget = parseFloat(document.getElementById("ctarget-slider").value);
+
+      // Asegurar coherencia física: Cs >= Ctarget >= C0
+      if (currentC0 >= currentCs) {
+        currentC0 = Math.max(0.01, currentCs - 0.05);
+        document.getElementById("c0-slider").value = currentC0;
+      }
+      if (currentCtarget > currentCs) {
+        currentCtarget = currentCs;
+        document.getElementById("ctarget-slider").value = currentCtarget;
+      }
+      if (currentCtarget < currentC0) {
+        currentCtarget = currentC0 + 0.05;
+        document.getElementById("ctarget-slider").value = currentCtarget;
+      }
+
+      // Parámetros D0 y Q
+      let d0 = customD0;
+      let q = customQ;
+      if (currentSystemKey !== "custom") {
+        d0 = MATERIAL_SYSTEMS[currentSystemKey].D0;
+        q = MATERIAL_SYSTEMS[currentSystemKey].Q;
+      }
+
+      // Actualizar etiquetas visuales de los sliders
+      document.getElementById("temp-val-display").innerText = `${currentT} °C (${Math.round(currentT + 273.15)} K)`;
+      document.getElementById("time-val-display").innerText = `${currentT_hours.toFixed(2)} h (${Math.round(currentT_hours * 3600).toLocaleString()} s)`;
+      document.getElementById("cs-val-display").innerText = `${currentCs.toFixed(2)} wt%`;
+      document.getElementById("c0-val-display").innerText = `${currentC0.toFixed(2)} wt%`;
+      document.getElementById("ctarget-val-display").innerText = `${currentCtarget.toFixed(2)} wt% (${estimateHardnessHRC(currentCtarget)} HRC)`;
+
+      // Cálculo cinético
+      const t_sec = currentT_hours * 3600;
+      const D = calculateDiffusivity(currentT, d0, q);
+      const diffLength_m = 2.0 * Math.sqrt(D * t_sec);
+      const diffLength_mm = diffLength_m * 1000.0;
+
+      // Cálculo de profundidad efectiva x_eff para C = currentCtarget
+      // (Ctarget - C0)/(Cs - C0) = 1 - erf(z)  =>  erf(z) = (Cs - Ctarget)/(Cs - C0)
+      let x_eff_mm = 0;
+      const ratio = (currentCs - currentCtarget) / (currentCs - currentC0);
+      if (ratio > 0 && ratio < 1) {
+        const z_eff = mathErfInv(ratio);
+        const x_eff_m = z_eff * (2.0 * Math.sqrt(D * t_sec));
+        x_eff_mm = x_eff_m * 1000.0;
+      }
+
+      // Actualizar tarjetas de métricas
+      document.getElementById("metric-diffusivity").innerText = formatScientific(D, 2) + " m²/s";
+      document.getElementById("metric-diff-length").innerText = diffLength_mm.toFixed(2) + " mm";
+      document.getElementById("metric-case-depth").innerText = x_eff_mm > 0 ? x_eff_mm.toFixed(2) + " mm" : "Superficial";
+      document.getElementById("metric-surface-hardness").innerText = `${estimateHardnessHRC(currentCs)} HRC`;
+
+      // Frecuencia de saltos aproximada en el lattice
+      const nu0 = 1e13; // Frecuencia de intento de vibración de Debye (~10^13 Hz)
+      const jumpRate = nu0 * Math.exp(-q / (R_GAS * (currentT + 273.15)));
+      document.getElementById("metric-jump-freq").innerText = `~${formatScientific(jumpRate, 1)} saltos/s`;
+
+      const sysInfo = MATERIAL_SYSTEMS[currentSystemKey];
+      document.getElementById("metric-lattice-type").innerText = `${sysInfo.lattice} (${sysInfo.mechanism})`;
+      const kb = 8.617333262145e-5; // eV/K
+      const thermalEnergyEv = kb * (currentT + 273.15);
+      document.getElementById("metric-thermal-energy").innerText = `${thermalEnergyEv.toFixed(3)} eV / átomo`;
+
+      // Redibujar gráfico SVG de difusión
+      renderDiffusionChart(D, t_sec, x_eff_mm);
+    }
+
+    function formatScientific(num, decimals) {
+      if (num === 0) return "0";
+      const exp = Math.floor(Math.log10(Math.abs(num)));
+      const mantissa = num / Math.pow(10, exp);
+      return `${mantissa.toFixed(decimals)} × 10${toSuperscript(exp)}`;
+    }
+
+    function toSuperscript(num) {
+      const supMap = {
+        '-': '⁻', '0': '⁰', '1': '¹', '2': '²', '3': '³',
+        '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹'
+      };
+      return String(num).split('').map(c => supMap[c] || c).join('');
+    }
+
+    // ==========================================
+    // 4. GENERADOR Y RENDERIZADOR DE GRÁFICA SVG
+    // ==========================================
+    let chartGeometry = {
+      padLeft: 60,
+      padRight: 60,
+      padTop: 30,
+      padBottom: 45,
+      width: 750,
+      height: 360,
+      maxDepthMM: 2.5
+    };
+
+    function renderDiffusionChart(D, t_sec, x_eff_mm) {
+      const svg = document.getElementById("diffusion-chart-svg");
+      const { padLeft, padRight, padTop, padBottom, width, height } = chartGeometry;
+      const plotW = width - padLeft - padRight;
+      const plotH = height - padTop - padBottom;
+
+      // Rango de profundidad dinámico en función de la difusión
+      let maxDepthMM = 2.5;
+      if (x_eff_mm > 1.8) maxDepthMM = Math.ceil(x_eff_mm * 1.3 * 2) / 2;
+      chartGeometry.maxDepthMM = Math.max(1.5, maxDepthMM);
+
+      const maxC = Math.max(1.2, Math.ceil(currentCs * 1.1 * 10) / 10);
+
+      // Mapeos de coordenadas
+      const mapX = (xMM) => padLeft + (xMM / chartGeometry.maxDepthMM) * plotW;
+      const mapY = (cVal) => padTop + plotH - (cVal / maxC) * plotH;
+      const mapHardnessY = (hrcVal) => padTop + plotH - ((hrcVal - 20) / (65 - 20)) * plotH;
+
+      let svgHTML = `
+        <!-- Fondo y Ejes de Cuadrícula -->
+        <rect x="${padLeft}" y="${padTop}" width="${plotW}" height="${plotH}" fill="#020617" rx="6" />
+      `;
+
+      // Cuadrícula horizontal (Concentración wt% y Dureza HRC)
+      const numYDivs = 5;
+      for (let i = 0; i <= numYDivs; i++) {
+        const cVal = (maxC * i) / numYDivs;
+        const yPx = mapY(cVal);
+        const hrcVal = Math.round(20 + ((65 - 20) * i) / numYDivs);
+
+        svgHTML += `
+          <line x1="${padLeft}" y1="${yPx}" x2="${padLeft + plotW}" y2="${yPx}" stroke="#1e293b" stroke-dasharray="3,3" />
+          <!-- Eje Izquierdo: Concentración %C -->
+          <text x="${padLeft - 10}" y="${yPx + 4}" fill="#94a3b8" font-size="10" text-anchor="end" font-family="monospace">${cVal.toFixed(2)}%</text>
+          <!-- Eje Derecho: Dureza HRC -->
+          <text x="${padLeft + plotW + 10}" y="${yPx + 4}" fill="#f59e0b" font-size="10" text-anchor="start" font-family="monospace">${hrcVal} HRC</text>
+        `;
+      }
+
+      // Cuadrícula vertical (Profundidad x en mm)
+      const numXDivs = 5;
+      for (let i = 0; i <= numXDivs; i++) {
+        const xMM = (chartGeometry.maxDepthMM * i) / numXDivs;
+        const xPx = mapX(xMM);
+        svgHTML += `
+          <line x1="${xPx}" y1="${padTop}" x2="${xPx}" y2="${padTop + plotH}" stroke="#1e293b" stroke-dasharray="3,3" />
+          <text x="${xPx}" y="${padTop + plotH + 18}" fill="#94a3b8" font-size="10" text-anchor="middle" font-family="monospace">${xMM.toFixed(2)} mm</text>
+        `;
+      }
+
+      // Línea horizontal de Criterio de Capa Efectiva (Target Concentration)
+      const yTargetPx = mapY(currentCtarget);
+      svgHTML += `
+        <line x1="${padLeft}" y1="${yTargetPx}" x2="${padLeft + plotW}" y2="${yTargetPx}" stroke="#eab308" stroke-width="1.5" stroke-dasharray="5,4" />
+        <rect x="${padLeft + 8}" y="${yTargetPx - 16}" width="165" height="15" fill="#854d0e" rx="3" opacity="0.85" />
+        <text x="${padLeft + 12}" y="${yTargetPx - 5}" fill="#fef08a" font-size="9" font-weight="bold">Límite Capa Efectiva (${currentCtarget.toFixed(2)}% C / 50 HRC)</text>
+      `;
+
+      // Curva guardada de comparación (si existe)
+      if (savedCurve) {
+        let pathSaved = "";
+        const steps = 100;
+        for (let i = 0; i <= steps; i++) {
+          const xMM = (chartGeometry.maxDepthMM * i) / steps;
+          const xM = xMM / 1000.0;
+          const cVal = calculateConcentration(xM, savedCurve.t_sec, savedCurve.D, savedCurve.Cs, savedCurve.C0);
+          const px = mapX(xMM);
+          const py = mapY(cVal);
+          pathSaved += (i === 0 ? `M ${px} ${py}` : ` L ${px} ${py}`);
+        }
+        svgHTML += `
+          <path d="${pathSaved}" fill="none" stroke="#c084fc" stroke-width="2" stroke-dasharray="4,4" opacity="0.8" />
+        `;
+      }
+
+      // Curva principal de Concentración C(x, t) y Relleno bajo la curva
+      let pathC = "";
+      let pathArea = `M ${mapX(0)} ${mapY(0)}`;
+      let pathHRC = "";
+      const steps = 120;
+
+      for (let i = 0; i <= steps; i++) {
+        const xMM = (chartGeometry.maxDepthMM * i) / steps;
+        const xM = xMM / 1000.0;
+        const cVal = calculateConcentration(xM, t_sec, D, currentCs, currentC0);
+        const px = mapX(xMM);
+        const py = mapY(cVal);
+
+        pathC += (i === 0 ? `M ${px} ${py}` : ` L ${px} ${py}`);
+        pathArea += ` L ${px} ${py}`;
+
+        const hrcVal = estimateHardnessHRC(cVal);
+        const pyHRC = mapHardnessY(hrcVal);
+        pathHRC += (i === 0 ? `M ${px} ${pyHRC}` : ` L ${px} ${pyHRC}`);
+      }
+
+      pathArea += ` L ${mapX(chartGeometry.maxDepthMM)} ${mapY(0)} Z`;
+
+      svgHTML += `
+        <!-- Relleno bajo la curva C(x) -->
+        <defs>
+          <linearGradient id="curveGradient" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#34d399" stop-opacity="0.25"/>
+            <stop offset="100%" stop-color="#34d399" stop-opacity="0.0"/>
+          </linearGradient>
+        </defs>
+        <path d="${pathArea}" fill="url(#curveGradient)" />
+
+        <!-- Curva de Dureza HRC -->
+        <path d="${pathHRC}" fill="none" stroke="#f59e0b" stroke-width="1.8" stroke-dasharray="6,3" opacity="0.85" />
+
+        <!-- Curva Principal de Concentración C(x) -->
+        <path d="${pathC}" fill="none" stroke="#34d399" stroke-width="2.8" stroke-linecap="round" />
+      `;
+
+      // Marcador de Capa Efectiva x_eff
+      if (x_eff_mm > 0 && x_eff_mm <= chartGeometry.maxDepthMM) {
+        const pxEff = mapX(x_eff_mm);
+        svgHTML += `
+          <line x1="${pxEff}" y1="${padTop}" x2="${pxEff}" y2="${padTop + plotH}" stroke="#10b981" stroke-width="1.5" stroke-dasharray="3,3" />
+          <circle cx="${pxEff}" cy="${yTargetPx}" r="5" fill="#10b981" stroke="#064e3b" stroke-width="2" />
+          <rect x="${pxEff - 45}" y="${padTop + 6}" width="90" height="18" fill="#064e3b" rx="4" />
+          <text x="${pxEff}" y="${padTop + 19}" fill="#a7f3d0" font-size="9" font-weight="bold" text-anchor="middle">x_eff = ${x_eff_mm.toFixed(2)} mm</text>
+        `;
+      }
+
+      // Títulos de los Ejes
+      svgHTML += `
+        <text x="${padLeft + plotW / 2}" y="${height - 10}" fill="#94a3b8" font-size="11" font-weight="bold" text-anchor="middle">
+          Profundidad de Penetración desde la Superficie (x en mm)
+        </text>
+        <text x="18" y="${padTop + plotH / 2}" fill="#34d399" font-size="11" font-weight="bold" text-anchor="middle" transform="rotate(-90, 18, ${padTop + plotH / 2})">
+          Concentración de Soluto C(x) [wt%]
+        </text>
+        <text x="${width - 15}" y="${padTop + plotH / 2}" fill="#f59e0b" font-size="11" font-weight="bold" text-anchor="middle" transform="rotate(90, ${width - 15}, ${padTop + plotH / 2})">
+          Dureza Estimada del Engrane [HRC]
+        </text>
+      `;
+
+      svg.innerHTML = svgHTML;
+      attachChartTooltipEvents(D, t_sec);
+    }
+
+    // Interacción con Mouse / Hover sobre el Gráfico
+    function attachChartTooltipEvents(D, t_sec) {
+      const svg = document.getElementById("diffusion-chart-svg");
+      const tooltip = document.getElementById("chart-tooltip");
+      const { padLeft, padRight, padTop, padBottom, width, height, maxDepthMM } = chartGeometry;
+      const plotW = width - padLeft - padRight;
+
+      svg.onmousemove = function(e) {
+        const rect = svg.getBoundingClientRect();
+        const scaleX = width / rect.width;
+        const mouseSvgX = (e.clientX - rect.left) * scaleX;
+
+        if (mouseSvgX >= padLeft && mouseSvgX <= padLeft + plotW) {
+          const depthMM = ((mouseSvgX - padLeft) / plotW) * maxDepthMM;
+          const depthM = depthMM / 1000.0;
+          const conc = calculateConcentration(depthM, t_sec, D, currentCs, currentC0);
+          const hrc = estimateHardnessHRC(conc);
+
+          // Gradiente local dC/dx y flujo instantáneo J = -D dC/dx
+          const deltaX = 1e-6; // 1 micrón
+          const concDelta = calculateConcentration(depthM + deltaX, t_sec, D, currentCs, currentC0);
+          const dC_dx = (concDelta - conc) / deltaX;
+          const flux = -D * dC_dx;
+
+          document.getElementById("tt-depth").innerText = `Profundidad: ${depthMM.toFixed(2)} mm`;
+          document.getElementById("tt-conc").innerText = `Concentración C: ${conc.toFixed(3)} wt%`;
+          document.getElementById("tt-hrc").innerText = `Dureza est.: ${hrc} HRC`;
+          document.getElementById("tt-flux").innerText = `Gradiente dC/dx: ${dC_dx.toFixed(1)} %/m`;
+
+          tooltip.style.left = `${e.clientX - rect.left + 15}px`;
+          tooltip.style.top = `${e.clientY - rect.top - 10}px`;
+          tooltip.classList.remove("hidden");
+        } else {
+          tooltip.classList.add("hidden");
+        }
+      };
+
+      svg.onmouseleave = function() {
+        tooltip.classList.add("hidden");
+      };
+    }
+
+    // Guardar / Fijar curva de referencia para comparar
+    function toggleComparisonCurve() {
+      const btnText = document.getElementById("compare-btn-text");
+      const legendItem = document.getElementById("ref-legend-item");
+
+      if (savedCurve) {
+        savedCurve = null;
+        btnText.innerText = "Fijar Referencia";
+        legendItem.classList.add("hidden");
+      } else {
+        const d0 = currentSystemKey === "custom" ? customD0 : MATERIAL_SYSTEMS[currentSystemKey].D0;
+        const q = currentSystemKey === "custom" ? customQ : MATERIAL_SYSTEMS[currentSystemKey].Q;
+        const D = calculateDiffusivity(currentT, d0, q);
+        const t_sec = currentT_hours * 3600;
+
+        savedCurve = {
+          D: D,
+          t_sec: t_sec,
+          Cs: currentCs,
+          C0: currentC0,
+          T: currentT
+        };
+        btnText.innerText = "Borrar Referencia";
+        legendItem.classList.remove("hidden");
+      }
+      updateSimulation();
+    }
+
+    // Exportación de datos numéricos a CSV
+    function exportDataCSV() {
+      const d0 = currentSystemKey === "custom" ? customD0 : MATERIAL_SYSTEMS[currentSystemKey].D0;
+      const q = currentSystemKey === "custom" ? customQ : MATERIAL_SYSTEMS[currentSystemKey].Q;
+      const D = calculateDiffusivity(currentT, d0, q);
+      const t_sec = currentT_hours * 3600;
+
+      let csv = "Profundidad_mm,Concentracion_wt_pct,Dureza_HRC,Flujo_Fick_J\n";
+      const steps = 50;
+      const maxMM = chartGeometry.maxDepthMM;
+
+      for (let i = 0; i <= steps; i++) {
+        const xMM = (maxMM * i) / steps;
+        const xM = xMM / 1000.0;
+        const cVal = calculateConcentration(xM, t_sec, D, currentCs, currentC0);
+        const hrc = estimateHardnessHRC(cVal);
+        
+        const delta = 1e-6;
+        const cPlus = calculateConcentration(xM + delta, t_sec, D, currentCs, currentC0);
+        const flux = -D * ((cPlus - cVal) / delta);
+
+        csv += `${xMM.toFixed(3)},${cVal.toFixed(4)},${hrc},${flux.toExponential(4)}\n`;
+      }
+
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `perfil_difusion_T${currentT}C_t${currentT_hours}h.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    // ==========================================
+    // 5. SIMULACIÓN DE DINÁMICA ATÓMICA (CANVAS 2D)
+    // ==========================================
+    function initLatticeCanvas() {
+      const canvas = document.getElementById("lattice-canvas");
+      const ctx = canvas.getContext("2d");
+
+      // Ajustar resolución retina
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width * window.devicePixelRatio;
+      canvas.height = rect.height * window.devicePixelRatio;
+      ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+
+      initAtoms(canvas.width / window.devicePixelRatio, canvas.height / window.devicePixelRatio);
+    }
+
+    function initAtoms(width, height) {
+      atoms = [];
+      const cols = Math.floor(width / 34);
+      const rows = Math.floor(height / 34);
+      const spacingX = width / (cols + 1);
+      const spacingY = height / (rows + 1);
+
+      // 1. Átomos solventes de la red cristalina (Fe / Al)
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const baseX = spacingX * (c + 1);
+          const baseY = spacingY * (r + 1);
+          atoms.push({
+            type: "solvent",
+            baseX: baseX,
+            baseY: baseY,
+            x: baseX,
+            y: baseY,
+            vx: 0,
+            vy: 0,
+            radius: 8,
+            color: "#3b82f6"
+          });
+        }
+      }
+
+      // 2. Átomos de soluto intersticial / sustitucional (Carbono o Nitrógeno)
+      // Generamos un gradiente espacial de concentración: más denso a la izquierda (superficie)
+      const numSolute = 40;
+      for (let i = 0; i < numSolute; i++) {
+        // Distribución exponencial decreciente desde la superficie izquierda (x=0)
+        const randBias = Math.pow(Math.random(), 2.2);
+        const x = 20 + randBias * (width - 40);
+        const y = 20 + Math.random() * (height - 40);
+        atoms.push({
+          type: "solute",
+          x: x,
+          y: y,
+          vx: (Math.random() - 0.5) * 1.5,
+          vy: (Math.random() - 0.5) * 1.5,
+          radius: 4.5,
+          color: "#f43f5e",
+          jumpCooldown: Math.random() * 60
+        });
+      }
+    }
+
+    function resetAtoms() {
+      const canvas = document.getElementById("lattice-canvas");
+      const rect = canvas.getBoundingClientRect();
+      initAtoms(rect.width, rect.height);
+    }
+
+    function toggleAnimation() {
+      animRunning = !animRunning;
+      const playIcon = document.getElementById("anim-play-icon");
+      const playText = document.getElementById("anim-play-text");
+      if (animRunning) {
+        playIcon.innerText = "⏸️";
+        playText.innerText = "Pausar";
+        animateLattice();
+      } else {
+        playIcon.innerText = "▶️";
+        playText.innerText = "Reanudar";
+        cancelAnimationFrame(animFrameId);
+      }
+    }
+
+    function animateLattice() {
+      if (!animRunning) return;
+      const canvas = document.getElementById("lattice-canvas");
+      if (!canvas) return;
+      const ctx = canvas.getContext("2d");
+      const rect = canvas.getBoundingClientRect();
+      const w = rect.width;
+      const h = rect.height;
+
+      ctx.clearRect(0, 0, w, h);
+
+      // Efecto de la temperatura sobre la amplitud de vibración térmica (kT)
+      const tempFactor = (currentT - 400) / (1150 - 400); // 0.0 a 1.0
+      const vibrationAmp = 0.5 + tempFactor * 2.8;
+      const jumpProbability = 0.005 + tempFactor * 0.04;
+
+      // 1. Dibujar enlaces de la red cristalina
+      ctx.strokeStyle = "rgba(71, 85, 105, 0.35)";
+      ctx.lineWidth = 1;
+
+      const solventAtoms = atoms.filter(a => a.type === "solvent");
+      for (let i = 0; i < solventAtoms.length; i++) {
+        const a1 = solventAtoms[i];
+        for (let j = i + 1; j < solventAtoms.length; j++) {
+          const a2 = solventAtoms[j];
+          const distSq = (a1.x - a2.x)**2 + (a1.y - a2.y)**2;
+          if (distSq < 42 * 42) {
+            ctx.beginPath();
+            ctx.moveTo(a1.x, a1.y);
+            ctx.lineTo(a2.x, a2.y);
+            ctx.stroke();
+          }
+        }
+      }
+
+      // 2. Actualizar y dibujar átomos de solvente (Fe/Al) con agitación térmica armónica
+      for (let atom of solventAtoms) {
+        const jitterX = (Math.random() - 0.5) * vibrationAmp;
+        const jitterY = (Math.random() - 0.5) * vibrationAmp;
+        atom.x = atom.baseX + jitterX;
+        atom.y = atom.baseY + jitterY;
+
+        // Gradiente radial para simular esfera metálica 3D
+        const radGrad = ctx.createRadialGradient(atom.x - 2, atom.y - 2, 1, atom.x, atom.y, atom.radius);
+        radGrad.addColorStop(0, "#93c5fd");
+        radGrad.addColorStop(1, "#1d4ed8");
+
+        ctx.fillStyle = radGrad;
+        ctx.beginPath();
+        ctx.arc(atom.x, atom.y, atom.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = "#1e3a8a";
+        ctx.lineWidth = 0.8;
+        ctx.stroke();
+      }
+
+      // 3. Actualizar y dibujar átomos de soluto difusor (C/N) con saltos estocásticos
+      const soluteAtoms = atoms.filter(a => a.type === "solute");
+      for (let solute of soluteAtoms) {
+        solute.jumpCooldown--;
+
+        if (solute.jumpCooldown <= 0) {
+          if (Math.random() < jumpProbability) {
+            // Salto activado térmicamente: mayor probabilidad de avanzar hacia la derecha si hay gradiente
+            const bias = 0.15; // Ligera deriva hacia el interior por gradiente de potencial químico
+            const angle = Math.random() * Math.PI * 2;
+            const jumpDist = 12 + Math.random() * 14;
+            solute.vx = Math.cos(angle) * jumpDist + bias * jumpDist;
+            solute.vy = Math.sin(angle) * jumpDist;
+            solute.jumpCooldown = 20 - tempFactor * 12;
+          }
+        }
+
+        // Amortiguamiento
+        solute.x += solute.vx;
+        solute.y += solute.vy;
+        solute.vx *= 0.85;
+        solute.vy *= 0.85;
+
+        // Rebote en fronteras
+        if (solute.x < 15) {
+          solute.x = 15;
+          solute.vx = Math.abs(solute.vx) + 2;
+        }
+        if (solute.x > w - 15) {
+          // Re-inyección en la superficie izquierda si cruza la frontera profunda para mantener estado estacionario
+          solute.x = 20 + Math.random() * 20;
+          solute.y = 20 + Math.random() * (h - 40);
+        }
+        if (solute.y < 15) solute.y = 15;
+        if (solute.y > h - 15) solute.y = h - 15;
+
+        // Efecto resplandor para el átomo de carbono
+        ctx.shadowColor = "#f43f5e";
+        ctx.shadowBlur = 8;
+        ctx.fillStyle = "#fb7185";
+        ctx.beginPath();
+        ctx.arc(solute.x, solute.y, solute.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      }
+
+      animFrameId = requestAnimationFrame(animateLattice);
+    }
+
+    // ==========================================
+    // 6. GESTIÓN DE PRESETS AUTOMOTRICES
+    // ==========================================
+    function loadPreset(presetKey) {
+      if (presetKey === "gear_8620") {
+        document.getElementById("system-select").value = "C_in_gamma";
+        onSystemSelectChange();
+        document.getElementById("temp-slider").value = 930;
+        document.getElementById("time-slider").value = 4.0;
+        document.getElementById("cs-slider").value = 1.00;
+        document.getElementById("c0-slider").value = 0.20;
+        document.getElementById("ctarget-slider").value = 0.40;
+      } else if (presetKey === "fast_carburizing") {
+        document.getElementById("system-select").value = "C_in_gamma";
+        onSystemSelectChange();
+        document.getElementById("temp-slider").value = 1000;
+        document.getElementById("time-slider").value = 2.0;
+        document.getElementById("cs-slider").value = 1.10;
+        document.getElementById("c0-slider").value = 0.20;
+        document.getElementById("ctarget-slider").value = 0.40;
+      } else if (presetKey === "crankshaft_nitriding") {
+        document.getElementById("system-select").value = "N_in_alpha";
+        onSystemSelectChange();
+        document.getElementById("temp-slider").value = 520;
+        document.getElementById("time-slider").value = 12.0;
+        document.getElementById("cs-slider").value = 0.45;
+        document.getElementById("c0-slider").value = 0.00;
+        document.getElementById("ctarget-slider").value = 0.25;
+      } else if (presetKey === "ferrite_carbon") {
+        document.getElementById("system-select").value = "C_in_alpha";
+        onSystemSelectChange();
+        document.getElementById("temp-slider").value = 700;
+        document.getElementById("time-slider").value = 1.5;
+        document.getElementById("cs-slider").value = 0.022;
+        document.getElementById("c0-slider").value = 0.005;
+        document.getElementById("ctarget-slider").value = 0.015;
+      } else if (presetKey === "self_diff") {
+        document.getElementById("system-select").value = "Fe_in_gamma";
+        onSystemSelectChange();
+        document.getElementById("temp-slider").value = 950;
+        document.getElementById("time-slider").value = 8.0;
+        document.getElementById("cs-slider").value = 1.0;
+        document.getElementById("c0-slider").value = 0.0;
+        document.getElementById("ctarget-slider").value = 0.5;
+      }
+      updateSimulation();
+    }
+
+    function onSystemSelectChange() {
+      currentSystemKey = document.getElementById("system-select").value;
+      const sys = MATERIAL_SYSTEMS[currentSystemKey];
+      if (currentSystemKey !== "custom") {
+        document.getElementById("temp-slider").value = sys.typicalTemp;
+        document.getElementById("cs-slider").value = sys.defaultCs;
+        document.getElementById("c0-slider").value = sys.defaultC0;
+        document.getElementById("custom-d0").value = sys.D0;
+        document.getElementById("custom-q").value = sys.Q / 1000.0;
+      }
+      resetAtoms();
+      updateSimulation();
+    }
+
+    function onCustomParamChange() {
+      customD0 = parseFloat(document.getElementById("custom-d0").value);
+      customQ = parseFloat(document.getElementById("custom-q").value) * 1000.0;
+      document.getElementById("system-select").value = "custom";
+      currentSystemKey = "custom";
+      updateSimulation();
+    }
+
+    function resetDefaultParameters() {
+      loadPreset("gear_8620");
+    }
+
+    // ==========================================
+    // 7. CALCULADORA DE HORNO INDUSTRIAL
+    // ==========================================
+    const CALC_PRESETS = {
+      diff_pinion: { x: 1.20, c: 0.40, cs: 1.00, c0: 0.20, ta: 910, tb: 960 },
+      trans_gear: { x: 0.80, c: 0.40, cs: 1.00, c0: 0.20, ta: 920, tb: 950 },
+      camshaft: { x: 1.50, c: 0.40, cs: 0.95, c0: 0.20, ta: 910, tb: 980 },
+      steering_rack: { x: 0.60, c: 0.40, cs: 1.00, c0: 0.18, ta: 900, tb: 940 }
+    };
+
+    function applyCalcPartPreset() {
+      const key = document.getElementById("calc-part-preset").value;
+      if (key === "custom") return;
+      const p = CALC_PRESETS[key];
+      document.getElementById("calc-target-x").value = p.x;
+      document.getElementById("calc-target-c").value = p.c;
+      document.getElementById("calc-cs").value = p.cs;
+      document.getElementById("calc-c0").value = p.c0;
+      document.getElementById("calc-temp-a").value = p.ta;
+      document.getElementById("calc-temp-b").value = p.tb;
+      calculateFurnaceTime();
+    }
+
+    function calculateFurnaceTime() {
+      const targetX_mm = parseFloat(document.getElementById("calc-target-x").value);
+      const targetC = parseFloat(document.getElementById("calc-target-c").value);
+      const cs = parseFloat(document.getElementById("calc-cs").value);
+      const c0 = parseFloat(document.getElementById("calc-c0").value);
+      const tempA = parseFloat(document.getElementById("calc-temp-a").value);
+      const tempB = parseFloat(document.getElementById("calc-temp-b").value);
+
+      document.getElementById("res-temp-a-lbl").innerText = tempA;
+      document.getElementById("res-temp-b-lbl").innerText = tempB;
+
+      // Despeje analítico de t a partir de Fick II:
+      // (Cs - C)/(Cs - C0) = erf(z)  =>  z = erf^-1((Cs - C)/(Cs - C0))
+      // z = x / (2 * sqrt(D * t))    =>  sqrt(t) = x / (2 * z * sqrt(D))
+      // t = x^2 / (4 * z^2 * D)
+      const ratio = (cs - targetC) / (cs - c0);
+      if (ratio <= 0 || ratio >= 1) {
+        alert("Los valores de concentración no son válidos. Asegúrate de que: C₀ < C_objetivo < C_s");
+        return;
+      }
+
+      const z = mathErfInv(ratio);
+      const targetX_m = targetX_mm / 1000.0;
+
+      const d0 = 2.3e-5;
+      const q = 148000;
+
+      const DA = calculateDiffusivity(tempA, d0, q);
+      const DB = calculateDiffusivity(tempB, d0, q);
+
+      const tSecA = (targetX_m * targetX_m) / (4.0 * z * z * DA);
+      const tSecB = (targetX_m * targetX_m) / (4.0 * z * z * DB);
+
+      const tHoursA = tSecA / 3600.0;
+      const tHoursB = tSecB / 3600.0;
+
+      document.getElementById("calc-res-time-a").innerText = tHoursA.toFixed(2);
+      document.getElementById("calc-res-time-a-min").innerText = `(${Math.round(tHoursA * 60)} minutos)`;
+
+      document.getElementById("calc-res-time-b").innerText = tHoursB.toFixed(2);
+      document.getElementById("calc-res-time-b-min").innerText = `(${Math.round(tHoursB * 60)} minutos)`;
+
+      const savingPct = ((tHoursA - tHoursB) / tHoursA) * 100.0;
+      const diffHours = Math.floor(tHoursA - tHoursB);
+      const diffMins = Math.round(((tHoursA - tHoursB) - diffHours) * 60);
+
+      document.getElementById("calc-saving-percent").innerText = `Ahorro de Tiempo: ${savingPct.toFixed(1)}%`;
+      document.getElementById("calc-saving-desc").innerText = `Aumentar ${Math.round(tempB - tempA)} °C reduce el ciclo en ${diffHours} horas y ${diffMins} minutos.`;
+    }
+
+    // ==========================================
+    // 8. EVALUACIÓN Y RETOS (QUIZ)
+    // ==========================================
+    const quizAnswers = { 1: false, 2: false, 3: false, 4: false };
+
+    function checkQuestion(qNum, correctVal) {
+      const selected = document.querySelector(`input[name="q${qNum}"]:checked`);
+      const feedback = document.getElementById(`feedback-q${qNum}`);
+      const badge = document.getElementById(`badge-q${qNum}`);
+      const card = document.getElementById(`quiz-card-q${qNum}`) || document.getElementById(`quiz-card-${qNum}`);
+
+      if (!selected) {
+        alert("Por favor selecciona una respuesta.");
+        return;
+      }
+
+      feedback.classList.remove("hidden");
+
+      if (selected.value === correctVal) {
+        quizAnswers[qNum] = true;
+        badge.innerText = "Correcto";
+        badge.className = "text-xs font-semibold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30";
+        feedback.className = "text-xs text-emerald-400 font-medium p-2.5 rounded-lg bg-emerald-950/60 border border-emerald-800/80 mt-2";
+        
+        if (qNum === 1) {
+          feedback.innerHTML = "¡Excelente deducción metalúrgica! La solubilidad del carbono en austenita (&gamma;-FCC) es 100 veces mayor que en ferrita (&alpha;-BCC). Aunque en ferrita el coeficiente D es alto por el empaquetamiento más abierto (0.68), solo disuelve hasta 0.022% C, insuficiente para temple martensítico duro.";
+        } else if (qNum === 2) {
+          feedback.innerHTML = "¡Respuesta correcta! La nitruración a 520 °C se realiza en fase ferrítica sin cambios alotrópicos de fase (&gamma;&rarr;martensita) ni choque térmico por temple en aceite, garantizando que el cigüeñal mantenga la coaxialidad perfecta de los muñones.";
+        } else if (qNum === 3) {
+          feedback.innerHTML = "¡Correcto! En la solución de la Segunda Ley de Fick, la profundidad escala con la raíz cuadrada del tiempo (x &prop; &radic;t). Por tanto, t &prop; x². Si duplicas la profundidad (2x), requieres 2² = 4 veces más tiempo (4 &times; 4 h = 16 horas).";
+        } else if (qNum === 4) {
+          feedback.innerHTML = "¡Excelente fundamentación cuántica y termodinámica! El soluto intersticial pequeño (C, N) no necesita crear vacancias para saltar (solo energía de migración Q_m). En contraste, los átomos sustitucionales grandes requieren la suma termodinámica de energía de formación de vacancia más migración (Q = Q_v + Q_m &asymp; 280 kJ/mol).";
+        }
+      } else {
+        quizAnswers[qNum] = false;
+        badge.innerText = "Incorrecto";
+        badge.className = "text-xs font-semibold px-2 py-0.5 rounded bg-rose-500/20 text-rose-400 border border-rose-500/30";
+        feedback.className = "text-xs text-rose-400 font-medium p-2.5 rounded-lg bg-rose-950/60 border border-rose-800/80 mt-2";
+        feedback.innerText = "Respuesta incorrecta. Revisa los conceptos físico-químicos en la pestaña de Fundamentos Teóricos o reevalúa la justificación técnica.";
+      }
+
+      // Actualizar score
+      const totalCorrect = Object.values(quizAnswers).filter(Boolean).length;
+      document.getElementById("quiz-score").innerText = `${totalCorrect} / 4`;
+    }
+
+    // ==========================================
+    // 9. NAVEGACIÓN DE PESTAÑAS (TABS)
+    // ==========================================
+    function switchTab(tabId) {
+      const tabs = ["sim", "calc", "quiz", "theory"];
+      tabs.forEach(t => {
+        const el = document.getElementById(`tab-${t}`);
+        const btn = document.getElementById(`tab-${t}-btn`);
+        if (t === tabId) {
+          el.classList.remove("hidden");
+          btn.className = "px-3 py-1.5 rounded-md font-medium transition-all bg-blue-600 text-white shadow";
+        } else {
+          el.classList.add("hidden");
+          btn.className = "px-3 py-1.5 rounded-md font-medium text-slate-300 hover:text-white transition-all";
+        }
+      });
+
+      if (tabId === "sim") {
+        setTimeout(() => {
+          initLatticeCanvas();
+          updateSimulation();
+        }, 50);
+      } else if (tabId === "calc") {
+        calculateFurnaceTime();
+      }
+    }
+
+    // Inicialización al cargar la ventana
+    window.addEventListener("DOMContentLoaded", () => {
+      initLatticeCanvas();
+      updateSimulation();
+      calculateFurnaceTime();
+    });
+
+    window.addEventListener("resize", () => {
+      initLatticeCanvas();
+      updateSimulation();
+    });
+  </script>
+</body>
+</html>
