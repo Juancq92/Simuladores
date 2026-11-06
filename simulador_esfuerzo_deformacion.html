@@ -1,0 +1,1979 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simulador de Ensayo de Tracción y Diagrama Esfuerzo-Deformación | Ingeniería Automotriz</title>
+  <!-- Tailwind CSS allowlisted CDN -->
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    /* Custom scrollbars and transitions */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(128, 128, 128, 0.08);
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(128, 128, 128, 0.25);
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(128, 128, 128, 0.4);
+    }
+    .grid-bg {
+      background-size: 24px 24px;
+      background-image: 
+        linear-gradient(to right, rgba(128, 128, 128, 0.08) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(128, 128, 128, 0.08) 1px, transparent 1px);
+    }
+    .glow-effect {
+      box-shadow: 0 0 15px -3px rgba(59, 130, 246, 0.4);
+    }
+  </style>
+</head>
+<body class="bg-[var(--background)] text-[var(--foreground)] antialiased min-h-screen flex flex-col font-sans">
+
+  <!-- TOP APP BAR -->
+  <header class="border-b border-[var(--border)] bg-[var(--card)] sticky top-0 z-30 shadow-xs">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-lg bg-blue-600/10 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-xl border border-blue-500/20">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="font-bold text-base sm:text-lg text-[var(--foreground)] tracking-tight">Lab Virtual: Diagrama Esfuerzo-Deformación</h1>
+            <span class="px-2 py-0.5 text-xs rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 font-medium border border-blue-500/20">Ingeniería Automotriz</span>
+          </div>
+          <p class="text-xs text-[var(--muted-foreground)]">Ciencia de Materiales & Mecánica de Fractura para Seguridad y Chasis Vehicular</p>
+        </div>
+      </div>
+
+      <!-- NAVIGATION TABS -->
+      <nav class="flex items-center gap-1 bg-[var(--background)] p-1 rounded-lg border border-[var(--border)] text-xs">
+        <button id="tab-lab" onclick="switchTab('lab')" class="tab-btn px-3 py-1.5 rounded-md font-medium transition-all bg-[var(--card)] text-blue-600 dark:text-blue-400 shadow-xs">
+          Ensayo Universal (MTS)
+        </button>
+        <button id="tab-compare" onclick="switchTab('compare')" class="tab-btn px-3 py-1.5 rounded-md font-medium transition-all text-[var(--muted-foreground)] hover:text-[var(--foreground)]">
+          Comparador de Materiales
+        </button>
+        <button id="tab-theory" onclick="switchTab('theory')" class="tab-btn px-3 py-1.5 rounded-md font-medium transition-all text-[var(--muted-foreground)] hover:text-[var(--foreground)]">
+          Guía de Cátedra
+        </button>
+        <button id="tab-quiz" onclick="switchTab('quiz')" class="tab-btn px-3 py-1.5 rounded-md font-medium transition-all text-[var(--muted-foreground)] hover:text-[var(--foreground)] flex items-center gap-1">
+          <span>Reto de Selección</span>
+          <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 py-5 flex-1 w-full space-y-5">
+
+    <!-- TAB 1: LABORATORIO DE ENSAYO -->
+    <div id="view-lab" class="space-y-5">
+      
+      <!-- CONTROLS & MATERIAL SELECTOR HEADER -->
+      <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 shadow-xs">
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+          
+          <!-- Material Dropdown -->
+          <div class="md:col-span-4 space-y-1">
+            <label class="block text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider">
+              1. Material Automotriz de Ensayo
+            </label>
+            <div class="relative">
+              <select id="material-select" onchange="changeMaterial(this.value)" class="w-full bg-[var(--background)] text-[var(--foreground)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-blue-500 focus:outline-hidden transition-all">
+                <option value="dp600">Acero Dual-Phase DP600 (Pilares B y Largueros)</option>
+                <option value="boro">Acero al Boro 22MnB5 (Célula Anti-Intrusión UHSS)</option>
+                <option value="al6061">Aluminio AA6061-T6 (Brazos de Suspensión y Capó)</option>
+                <option value="gg25">Fundición Gris GG25 (Discos de Freno)</option>
+                <option value="pa66">Polímero PA66-GF30 (Múltiple de Admisión)</option>
+                <option value="aisi1020">Acero Dulce AISI 1020 (Laminado - Meseta Lüders)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Specimen Dimensions Standard Indicator -->
+          <div class="md:col-span-3 bg-[var(--background)] border border-[var(--border)] rounded-lg p-2.5 flex items-center justify-between text-xs">
+            <div>
+              <span class="text-[var(--muted-foreground)] block">Norma Probeta:</span>
+              <strong class="text-[var(--foreground)] font-semibold">ASTM E8M / ISO 6892</strong>
+            </div>
+            <div class="text-right">
+              <span class="text-[var(--muted-foreground)] block">Geometría:</span>
+              <span class="font-mono text-blue-600 dark:text-blue-400">L₀=50mm | d₀=12.5mm</span>
+            </div>
+          </div>
+
+          <!-- Machine Controls Buttons -->
+          <div class="md:col-span-5 flex flex-wrap items-center justify-end gap-2">
+            <button id="btn-play" onclick="toggleTest()" class="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs sm:text-sm shadow-sm transition-all">
+              <svg id="icon-play" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span id="btn-play-text">Iniciar Ensayo</span>
+            </button>
+
+            <button onclick="resetTest()" class="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[var(--background)] hover:bg-[var(--border)] border border-[var(--border)] text-[var(--foreground)] text-xs font-medium transition-all">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              <span>Reiniciar</span>
+            </button>
+
+            <!-- Audio switch -->
+            <button id="btn-audio" onclick="toggleAudio()" title="Activar/Silenciar audio de laboratorio" class="p-2 rounded-lg bg-[var(--background)] border border-[var(--border)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-all">
+              <svg id="icon-sound-on" class="w-4 h-4 hidden text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+              </svg>
+              <svg id="icon-sound-off" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Strain manual slider & speed controls -->
+        <div class="mt-4 pt-3 border-t border-[var(--border)] flex flex-wrap items-center justify-between gap-3 text-xs">
+          <div class="flex-1 min-w-[240px] flex items-center gap-3">
+            <span class="font-medium text-[var(--muted-foreground)] whitespace-nowrap">Control Manual de Deformación (ε):</span>
+            <input id="strain-slider" type="range" min="0" max="0.35" step="0.0005" value="0" oninput="manualStrainChange(this.value)" class="w-full h-1.5 bg-[var(--border)] rounded-lg appearance-none cursor-pointer accent-blue-600">
+            <span id="slider-val" class="font-mono text-xs w-12 font-semibold">0.00%</span>
+          </div>
+
+          <div class="flex items-center gap-4">
+            <div class="flex items-center gap-2">
+              <span class="text-[var(--muted-foreground)]">Velocidad:</span>
+              <button onclick="setSpeed(0.5)" class="speed-btn px-2 py-0.5 rounded bg-[var(--background)] border border-[var(--border)] hover:bg-[var(--border)] text-xs">0.5x</button>
+              <button onclick="setSpeed(1.0)" class="speed-btn px-2 py-0.5 rounded bg-blue-600/20 text-blue-600 dark:text-blue-400 font-bold border border-blue-500/30 text-xs">1x</button>
+              <button onclick="setSpeed(2.5)" class="speed-btn px-2 py-0.5 rounded bg-[var(--background)] border border-[var(--border)] hover:bg-[var(--border)] text-xs">2.5x</button>
+            </div>
+            <div class="h-4 w-px bg-[var(--border)]"></div>
+            <!-- Checkbox toggles -->
+            <label class="flex items-center gap-1.5 cursor-pointer select-none">
+              <input id="check-true-curve" type="checkbox" onchange="renderGraph()" class="rounded border-[var(--border)] text-blue-600 focus:ring-0">
+              <span>Curva Real (σ_v)</span>
+            </label>
+            <label class="flex items-center gap-1.5 cursor-pointer select-none">
+              <input id="check-energy-areas" type="checkbox" checked onchange="renderGraph()" class="rounded border-[var(--border)] text-blue-600 focus:ring-0">
+              <span>Resiliencia & Tenacidad</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- MAIN LAB LAYOUT: SPECIMEN MACHINE (LEFT) + GRAPH & TELEMETRY (RIGHT) -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+        
+        <!-- LEFT: TENSILE TEST MACHINE VISUALIZER (4 COLS) -->
+        <div class="lg:col-span-4 bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 flex flex-col justify-between shadow-xs relative overflow-hidden">
+          
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping"></span>
+              <h2 class="font-bold text-sm text-[var(--foreground)]">Máquina Universal MTS-50kN</h2>
+            </div>
+            <span id="specimen-status-badge" class="px-2 py-0.5 text-xs font-semibold rounded bg-slate-500/10 text-slate-500 border border-slate-500/20">
+              En Reposo
+            </span>
+          </div>
+
+          <!-- Machine & Specimen Canvas Container -->
+          <div class="relative w-full h-[430px] bg-[var(--background)] rounded-lg border border-[var(--border)] flex items-center justify-center overflow-hidden grid-bg">
+            <canvas id="specimenCanvas" width="340" height="430" class="block"></canvas>
+            
+            <!-- Real-time Extensometer Floating HUD -->
+            <div class="absolute top-2 right-2 bg-[var(--card)]/90 backdrop-blur-xs border border-[var(--border)] p-2 rounded-lg text-xs font-mono space-y-1 shadow-sm pointer-events-none">
+              <div class="flex justify-between gap-2">
+                <span class="text-[var(--muted-foreground)]">ΔL:</span>
+                <span id="hud-deltaL" class="font-semibold text-blue-600 dark:text-blue-400">0.000 mm</span>
+              </div>
+              <div class="flex justify-between gap-2">
+                <span class="text-[var(--muted-foreground)]">d inst:</span>
+                <span id="hud-diam" class="font-semibold">12.50 mm</span>
+              </div>
+              <div class="flex justify-between gap-2">
+                <span class="text-[var(--muted-foreground)]">Red. Área:</span>
+                <span id="hud-ra" class="font-semibold text-amber-500">0.0 %</span>
+              </div>
+            </div>
+
+            <!-- Necking Alert Banner -->
+            <div id="necking-indicator" class="hidden absolute bottom-3 inset-x-3 bg-red-500/90 text-white text-center py-1 rounded-md text-xs font-bold tracking-wider animate-pulse shadow-md">
+              ⚠️ FORMACIÓN DE CUELLO (ESTRICCIÓN LOCALIZADA)
+            </div>
+
+            <!-- Fractured Alert Banner -->
+            <div id="fracture-indicator" class="hidden absolute inset-0 bg-red-950/60 backdrop-blur-xs flex flex-col items-center justify-center p-4 text-center">
+              <div class="w-12 h-12 rounded-full bg-red-600/20 border-2 border-red-500 text-red-500 flex items-center justify-center mb-2 animate-bounce">
+                💥
+              </div>
+              <h3 class="font-extrabold text-white text-base">FRACTURA DEL MATERIAL</h3>
+              <p id="fracture-desc" class="text-xs text-red-200 mt-1 max-w-[200px]">Copa y Cono Dúctil</p>
+              <button onclick="resetTest()" class="mt-3 px-3 py-1 bg-white text-red-900 rounded-md font-bold text-xs hover:bg-red-100">
+                Preparar Nueva Probeta
+              </button>
+            </div>
+          </div>
+
+          <!-- Microstructural state info card -->
+          <div class="mt-3 p-3 bg-[var(--background)] rounded-lg border border-[var(--border)] text-xs">
+            <span class="font-bold text-[var(--foreground)] flex items-center gap-1.5">
+              <svg class="w-3.5 h-3.5 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+              </svg>
+              Comportamiento Mecánico y Red Cristalina:
+            </span>
+            <p id="micro-explanation" class="text-[var(--muted-foreground)] mt-1 leading-relaxed">
+              La probeta está libre de carga. Los enlaces metálicos se encuentran en equilibrio energético interatómico.
+            </p>
+          </div>
+        </div>
+
+        <!-- RIGHT: INTERACTIVE STRESS-STRAIN CANVAS & TELEMETRY (8 COLS) -->
+        <div class="lg:col-span-8 space-y-4">
+          
+          <!-- Stress-Strain Canvas Card -->
+          <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 shadow-xs">
+            <div class="flex flex-wrap items-center justify-between mb-2 gap-2">
+              <div>
+                <h2 class="font-bold text-sm text-[var(--foreground)] flex items-center gap-2">
+                  <span>Diagrama Esfuerzo (σ) vs Deformación (ε)</span>
+                  <span id="material-badge-graph" class="text-xs px-2 py-0.5 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 font-semibold border border-blue-500/20">
+                    DP600
+                  </span>
+                </h2>
+                <p class="text-xs text-[var(--muted-foreground)]">Curva tensil calibrada según ensayo experimental automotriz</p>
+              </div>
+
+              <!-- Legend of curve features -->
+              <div class="flex flex-wrap items-center gap-3 text-xs">
+                <span class="flex items-center gap-1">
+                  <span class="w-3 h-1 bg-blue-600 rounded"></span>
+                  <span>Ingenieril (F/A₀)</span>
+                </span>
+                <span class="flex items-center gap-1">
+                  <span class="w-3 h-1 bg-emerald-500 rounded border border-dashed border-emerald-400"></span>
+                  <span>Verdadera (F/A_i)</span>
+                </span>
+                <span class="flex items-center gap-1">
+                  <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+                  <span>Fluencia (σ_y)</span>
+                </span>
+                <span class="flex items-center gap-1">
+                  <span class="w-2.5 h-2.5 rounded-full bg-red-500"></span>
+                  <span>UTS (σ_max)</span>
+                </span>
+              </div>
+            </div>
+
+            <!-- Canvas wrapper -->
+            <div class="relative w-full h-[330px] bg-[var(--background)] rounded-lg border border-[var(--border)] overflow-hidden">
+              <canvas id="graphCanvas" width="760" height="330" class="w-full h-full block cursor-crosshair"></canvas>
+              
+              <!-- Hover coordinate tooltip -->
+              <div id="graph-tooltip" class="hidden absolute pointer-events-none bg-[var(--card)] border border-[var(--border)] shadow-lg rounded-md p-2 text-xs font-mono z-20">
+              </div>
+            </div>
+
+            <!-- Key Points & Energy Interpretation Row -->
+            <div class="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+              <div class="p-2 rounded-lg bg-[var(--background)] border border-[var(--border)]">
+                <span class="text-[var(--muted-foreground)] block">Módulo de Young (E):</span>
+                <span id="stat-e" class="font-mono font-bold text-sm text-[var(--foreground)]">210 GPa</span>
+                <span class="text-[var(--muted-foreground)] block text-[11px]">Rigidez elástica</span>
+              </div>
+              <div class="p-2 rounded-lg bg-[var(--background)] border border-[var(--border)]">
+                <span class="text-[var(--muted-foreground)] block">Límite Elástico (σ_y):</span>
+                <span id="stat-sy" class="font-mono font-bold text-sm text-amber-500">360 MPa</span>
+                <span class="text-[var(--muted-foreground)] block text-[11px]">Offset 0.2% fluencia</span>
+              </div>
+              <div class="p-2 rounded-lg bg-[var(--background)] border border-[var(--border)]">
+                <span class="text-[var(--muted-foreground)] block">Resistencia Máxima (UTS):</span>
+                <span id="stat-uts" class="font-mono font-bold text-sm text-red-500">620 MPa</span>
+                <span class="text-[var(--muted-foreground)] block text-[11px]">Inicio de estricción</span>
+              </div>
+              <div class="p-2 rounded-lg bg-[var(--background)] border border-[var(--border)]">
+                <span class="text-[var(--muted-foreground)] block">Elongación Rotura (A%):</span>
+                <span id="stat-ef" class="font-mono font-bold text-sm text-emerald-500">22.0 %</span>
+                <span class="text-[var(--muted-foreground)] block text-[11px]">Medida de ductilidad</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- REAL-TIME TELEMETRY SENSORS & AUTOMOTIVE RELEVANCE -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            
+            <!-- Sensor Telemetry Panel -->
+            <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-3.5 shadow-xs space-y-2">
+              <h3 class="text-xs font-bold uppercase tracking-wider text-[var(--muted-foreground)] flex items-center justify-between">
+                <span>Telemetría de Carga y Esfuerzo en Vivo</span>
+                <span class="text-emerald-500 font-mono text-[11px]">CAN-BUS ACTIVE</span>
+              </h3>
+              
+              <div class="grid grid-cols-3 gap-2 text-center">
+                <div class="bg-[var(--background)] p-2 rounded-lg border border-[var(--border)]">
+                  <span class="text-[var(--muted-foreground)] text-xs block">Esfuerzo (σ)</span>
+                  <span id="live-stress" class="text-base font-extrabold font-mono text-blue-600 dark:text-blue-400">0.0</span>
+                  <span class="text-[var(--muted-foreground)] text-[11px] block">MPa</span>
+                </div>
+                <div class="bg-[var(--background)] p-2 rounded-lg border border-[var(--border)]">
+                  <span class="text-[var(--muted-foreground)] text-xs block">Deformación (ε)</span>
+                  <span id="live-strain" class="text-base font-extrabold font-mono text-emerald-500">0.00</span>
+                  <span class="text-[var(--muted-foreground)] text-[11px] block">%</span>
+                </div>
+                <div class="bg-[var(--background)] p-2 rounded-lg border border-[var(--border)]">
+                  <span class="text-[var(--muted-foreground)] text-xs block">Fuerza (F)</span>
+                  <span id="live-force" class="text-base font-extrabold font-mono text-amber-500">0.00</span>
+                  <span class="text-[var(--muted-foreground)] text-[11px] block">kN</span>
+                </div>
+              </div>
+
+              <!-- Energy Absorbed Meters (Resilience & Toughness) -->
+              <div class="pt-2 border-t border-[var(--border)] space-y-1.5 text-xs">
+                <div class="flex justify-between items-center">
+                  <span class="text-[var(--muted-foreground)] flex items-center gap-1">
+                    <span class="w-2.5 h-2.5 rounded bg-emerald-500/40 border border-emerald-500"></span>
+                    Módulo de Resiliencia (U_r):
+                  </span>
+                  <span id="live-ur" class="font-mono font-bold text-emerald-600 dark:text-emerald-400">0.31 kJ/m³</span>
+                </div>
+                <div class="w-full bg-[var(--background)] h-1.5 rounded-full overflow-hidden border border-[var(--border)]">
+                  <div id="bar-ur" class="bg-emerald-500 h-full rounded-full transition-all duration-300" style="width: 25%"></div>
+                </div>
+
+                <div class="flex justify-between items-center pt-1">
+                  <span class="text-[var(--muted-foreground)] flex items-center gap-1">
+                    <span class="w-2.5 h-2.5 rounded bg-blue-500/40 border border-blue-500"></span>
+                    Tenacidad Total (U_t - Crash Energy):
+                  </span>
+                  <span id="live-ut" class="font-mono font-bold text-blue-600 dark:text-blue-400">114.5 MJ/m³</span>
+                </div>
+                <div class="w-full bg-[var(--background)] h-1.5 rounded-full overflow-hidden border border-[var(--border)]">
+                  <div id="bar-ut" class="bg-blue-600 h-full rounded-full transition-all duration-300" style="width: 78%"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Automotive Application Spotlight Card -->
+            <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-3.5 shadow-xs flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between mb-2">
+                  <span class="text-xs font-bold uppercase tracking-wider text-[var(--muted-foreground)]">
+                    Aplicación en Ingeniería Automotriz
+                  </span>
+                  <span class="px-2 py-0.5 rounded text-[11px] font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+                    OEM Body-in-White
+                  </span>
+                </div>
+                
+                <h4 id="auto-component-title" class="font-bold text-sm text-[var(--foreground)] mb-1">
+                  Pilar B y Punteras Frontales Deformables (Crash Boxes)
+                </h4>
+                
+                <p id="auto-component-desc" class="text-xs text-[var(--muted-foreground)] leading-relaxed">
+                  El acero DP600 posee una matriz ferrítica blanda que aporta ductilidad combinada con islas de martensita dura que elevan la resistencia. Su alta tenacidad le permite arrugarse de forma progresiva en impactos frontales a 64 km/h (Euro NCAP), disipando megajulios de energía cinética antes de transmitir aceleraciones letales al habitáculo.
+                </p>
+              </div>
+
+              <!-- Crashworthiness badge -->
+              <div class="mt-3 p-2 bg-[var(--background)] rounded-lg border border-[var(--border)] flex items-center justify-between text-xs">
+                <span class="text-[var(--muted-foreground)]">Función en el Vehículo:</span>
+                <span id="auto-function-tag" class="font-semibold text-emerald-600 dark:text-emerald-400">Absorción de Impacto (Zona Deformable)</span>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- TAB 2: COMPARADOR MULTI-MATERIAL AUTOMOTRIZ -->
+    <div id="view-compare" class="hidden space-y-5">
+      <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-5 shadow-xs">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+          <div>
+            <h2 class="font-bold text-base text-[var(--foreground)]">Superposición Comparativa de Materiales Automotrices</h2>
+            <p class="text-xs text-[var(--muted-foreground)]">Analiza por qué los fabricantes utilizan un enfoque "Multi-Material": aceros UHSS para la jaula de seguridad, aluminios para ahorro de peso y aceros dúctiles para zonas deformables.</p>
+          </div>
+          <!-- Filter buttons -->
+          <div class="flex flex-wrap items-center gap-1.5 text-xs">
+            <button onclick="toggleCompareMat('dp600')" id="btn-comp-dp600" class="comp-filter-btn px-2.5 py-1 rounded-md border font-semibold border-blue-500 bg-blue-500/10 text-blue-600 dark:text-blue-400">
+              ✓ DP600
+            </button>
+            <button onclick="toggleCompareMat('boro')" id="btn-comp-boro" class="comp-filter-btn px-2.5 py-1 rounded-md border font-semibold border-red-500 bg-red-500/10 text-red-500">
+              ✓ 22MnB5 (Boro)
+            </button>
+            <button onclick="toggleCompareMat('al6061')" id="btn-comp-al6061" class="comp-filter-btn px-2.5 py-1 rounded-md border font-semibold border-emerald-500 bg-emerald-500/10 text-emerald-500">
+              ✓ Al 6061-T6
+            </button>
+            <button onclick="toggleCompareMat('gg25')" id="btn-comp-gg25" class="comp-filter-btn px-2.5 py-1 rounded-md border font-semibold border-purple-500 bg-purple-500/10 text-purple-500">
+              ✓ Fundición GG25
+            </button>
+            <button onclick="toggleCompareMat('pa66')" id="btn-comp-pa66" class="comp-filter-btn px-2.5 py-1 rounded-md border font-semibold border-amber-500 bg-amber-500/10 text-amber-500">
+              ✓ PA66-GF30
+            </button>
+            <button onclick="toggleCompareMat('aisi1020')" id="btn-comp-aisi1020" class="comp-filter-btn px-2.5 py-1 rounded-md border font-semibold border-slate-400 bg-slate-500/10 text-slate-400">
+              ✓ Acero 1020
+            </button>
+          </div>
+        </div>
+
+        <!-- Comparative Multi-Canvas -->
+        <div class="w-full h-[400px] bg-[var(--background)] rounded-lg border border-[var(--border)] overflow-hidden relative">
+          <canvas id="compareCanvas" width="1100" height="400" class="w-full h-full block"></canvas>
+        </div>
+
+        <!-- Material Properties Matrix Table -->
+        <div class="mt-5 overflow-x-auto">
+          <table class="w-full text-xs text-left border-collapse">
+            <thead>
+              <tr class="border-b border-[var(--border)] bg-[var(--background)] text-[var(--muted-foreground)]">
+                <th class="p-3 font-semibold">Material</th>
+                <th class="p-3 font-semibold">Módulo Young (E)</th>
+                <th class="p-3 font-semibold">Fluencia (σ_y)</th>
+                <th class="p-3 font-semibold">UTS (σ_max)</th>
+                <th class="p-3 font-semibold">Ductilidad (A%)</th>
+                <th class="p-3 font-semibold">Densidad (g/cm³)</th>
+                <th class="p-3 font-semibold">Resistencia Específica (σ/ρ)</th>
+                <th class="p-3 font-semibold">Aplicación Típica</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-[var(--border)]">
+              <tr class="hover:bg-[var(--background)]/50">
+                <td class="p-3 font-bold text-blue-600 dark:text-blue-400">Acero Dual-Phase DP600</td>
+                <td class="p-3 font-mono">210 GPa</td>
+                <td class="p-3 font-mono">360 MPa</td>
+                <td class="p-3 font-mono">620 MPa</td>
+                <td class="p-3 font-mono text-emerald-500 font-bold">22 %</td>
+                <td class="p-3 font-mono">7.85</td>
+                <td class="p-3 font-mono">79 kN·m/kg</td>
+                <td class="p-3 text-[var(--muted-foreground)]">Crash boxes, largueros de absorción de impacto</td>
+              </tr>
+              <tr class="hover:bg-[var(--background)]/50">
+                <td class="p-3 font-bold text-red-500">Acero al Boro 22MnB5 (UHSS)</td>
+                <td class="p-3 font-mono">210 GPa</td>
+                <td class="p-3 font-mono text-red-500 font-bold">1100 MPa</td>
+                <td class="p-3 font-mono text-red-500 font-bold">1550 MPa</td>
+                <td class="p-3 font-mono text-amber-500">7.0 %</td>
+                <td class="p-3 font-mono">7.85</td>
+                <td class="p-3 font-mono font-bold text-red-500">197 kN·m/kg</td>
+                <td class="p-3 text-[var(--muted-foreground)]">Celda de supervivencia, pilar B superior anti-intrusión</td>
+              </tr>
+              <tr class="hover:bg-[var(--background)]/50">
+                <td class="p-3 font-bold text-emerald-500">Aluminio AA6061-T6</td>
+                <td class="p-3 font-mono text-blue-500">69 GPa (1/3 acero)</td>
+                <td class="p-3 font-mono">275 MPa</td>
+                <td class="p-3 font-mono">310 MPa</td>
+                <td class="p-3 font-mono">15 %</td>
+                <td class="p-3 font-mono font-bold text-emerald-500">2.70 (ligero)</td>
+                <td class="p-3 font-mono font-bold text-emerald-500">115 kN·m/kg</td>
+                <td class="p-3 text-[var(--muted-foreground)]">Brazos de suspensión A-arm (masa no suspendida), capó</td>
+              </tr>
+              <tr class="hover:bg-[var(--background)]/50">
+                <td class="p-3 font-bold text-purple-500">Fundición Gris GG25</td>
+                <td class="p-3 font-mono">110 GPa</td>
+                <td class="p-3 font-mono text-slate-400">N/A (frágil)</td>
+                <td class="p-3 font-mono">250 MPa</td>
+                <td class="p-3 font-mono text-red-500 font-bold">0.6 %</td>
+                <td class="p-3 font-mono">7.20</td>
+                <td class="p-3 font-mono">35 kN·m/kg</td>
+                <td class="p-3 text-[var(--muted-foreground)]">Discos de freno ventilados (amortiguamiento NVH y disipación)</td>
+              </tr>
+              <tr class="hover:bg-[var(--background)]/50">
+                <td class="p-3 font-bold text-amber-500">Polímero PA66-GF30</td>
+                <td class="p-3 font-mono">8.8 GPa</td>
+                <td class="p-3 font-mono">120 MPa</td>
+                <td class="p-3 font-mono">175 MPa</td>
+                <td class="p-3 font-mono">3.4 %</td>
+                <td class="p-3 font-mono font-bold text-emerald-500">1.36</td>
+                <td class="p-3 font-mono font-bold text-amber-500">128 kN·m/kg</td>
+                <td class="p-3 text-[var(--muted-foreground)]">Múltiple de admisión, carcasas de termostato y bomba</td>
+              </tr>
+              <tr class="hover:bg-[var(--background)]/50">
+                <td class="p-3 font-bold text-slate-400">Acero Dulce AISI 1020</td>
+                <td class="p-3 font-mono">205 GPa</td>
+                <td class="p-3 font-mono">260 MPa (Lüders)</td>
+                <td class="p-3 font-mono">440 MPa</td>
+                <td class="p-3 font-mono text-emerald-500 font-bold">32 %</td>
+                <td class="p-3 font-mono">7.85</td>
+                <td class="p-3 font-mono">56 kN·m/kg</td>
+                <td class="p-3 text-[var(--muted-foreground)]">Soportes secundarios, ganchos de arrastre, bridas soldadas</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: GUÍA TEÓRICA DE CÁTEDRA -->
+    <div id="view-theory" class="hidden space-y-5">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+        
+        <!-- Concept 1: Elasticidad y Ley de Hooke -->
+        <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-5 space-y-2 shadow-xs">
+          <div class="flex items-center gap-2">
+            <span class="w-6 h-6 rounded-md bg-blue-600/10 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-xs">1</span>
+            <h3 class="font-bold text-sm text-[var(--foreground)]">Régimen Elástico & Ley de Hooke</h3>
+          </div>
+          <p class="text-xs text-[var(--muted-foreground)] leading-relaxed">
+            En la fase inicial, la deformación es completamente reversible. A nivel atómico, los enlaces interatómicos actúan como resortes microscópicos. Al retirar la carga, la probeta recupera su longitud original \(L_0\) sin deformación remanente.
+          </p>
+          <div class="p-2.5 rounded-lg bg-[var(--background)] border border-[var(--border)] font-mono text-xs text-blue-600 dark:text-blue-400 flex justify-between items-center">
+            <span>\(\sigma = E \cdot \epsilon\)</span>
+            <span class="text-[var(--muted-foreground)] text-[11px]">E = Módulo de Elasticidad (Young)</span>
+          </div>
+          <p class="text-[11px] text-[var(--muted-foreground)]">
+            <strong>Impacto automotriz:</strong> El módulo \(E\) del acero (\(\approx 210\text{ GPa}\)) es el triple que el del aluminio (\(\approx 70\text{ GPa}\)). Si diseñas un brazo de suspensión de aluminio, debe tener mayor momento de inercia (\(I\)) en su sección para no flectar excesivamente bajo cargas de frenado y curvas.
+          </p>
+        </div>
+
+        <!-- Concept 2: Límite Elástico y Fluencia -->
+        <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-5 space-y-2 shadow-xs">
+          <div class="flex items-center gap-2">
+            <span class="w-6 h-6 rounded-md bg-amber-500/10 text-amber-500 flex items-center justify-center font-bold text-xs">2</span>
+            <h3 class="font-bold text-sm text-[var(--foreground)]">Límite de Fluencia (Yield Strength, \(\sigma_y\))</h3>
+          </div>
+          <p class="text-xs text-[var(--muted-foreground)] leading-relaxed">
+            Es el esfuerzo al cual comienza el movimiento irreversible de dislocaciones a través de los planos cristalográficos de deslizamiento. Para materiales sin escalón de fluencia definido (como el DP600 o el Aluminio), se utiliza la convención del <strong>offset al 0.2%</strong> (\(\epsilon_p = 0.002\)).
+          </p>
+          <div class="p-2.5 rounded-lg bg-[var(--background)] border border-[var(--border)] font-mono text-xs text-amber-500 flex justify-between items-center">
+            <span>\(\sigma_y = \sigma(\epsilon = 0.002 + \sigma/E)\)</span>
+            <span class="text-[var(--muted-foreground)] text-[11px]">Método gráfico paralelo</span>
+          </div>
+          <p class="text-[11px] text-[var(--muted-foreground)]">
+            <strong>Impacto automotriz:</strong> En el diseño estructural estándar (chasis, tornillería de ruedas, bielas), el esfuerzo de trabajo nunca debe superar \(\sigma_y / \text{Factor de Seguridad}\), de lo contrario la geometría del vehículo se desalineará permanentemente.
+          </p>
+        </div>
+
+        <!-- Concept 3: Acritud y UTS -->
+        <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-5 space-y-2 shadow-xs">
+          <div class="flex items-center gap-2">
+            <span class="w-6 h-6 rounded-md bg-purple-500/10 text-purple-500 flex items-center justify-center font-bold text-xs">3</span>
+            <h3 class="font-bold text-sm text-[var(--foreground)]">Endurecimiento por Deformación (Acritud) y UTS</h3>
+          </div>
+          <p class="text-xs text-[var(--muted-foreground)] leading-relaxed">
+            Durante la deformación plástica uniforme, la densidad de dislocaciones aumenta dramáticamente (\(10^8 \to 10^{12} \text{ cm}^{-2}\)). Las dislocaciones se traban mutuamente, exigiendo una fuerza cada vez mayor para seguir deformando el material hasta alcanzar la <strong>Resistencia Máxima a la Tracción (UTS)</strong>.
+          </p>
+          <div class="p-2.5 rounded-lg bg-[var(--background)] border border-[var(--border)] font-mono text-xs text-purple-500 flex justify-between items-center">
+            <span>\(\sigma = K \cdot \epsilon^n\) (Ley de Hollomon)</span>
+            <span class="text-[var(--muted-foreground)] text-[11px]">n = Coeficiente de Acritud</span>
+          </div>
+          <p class="text-[11px] text-[var(--muted-foreground)]">
+            <strong>Impacto automotriz:</strong> Un alto exponente de acritud \(n\) en chapas de estampación para puertas y guardabarros evita que la chapa se rompa durante el embutido profundo en las prensas de carrocería.
+          </p>
+        </div>
+
+        <!-- Concept 4: Resiliencia vs Tenacidad en Crashworthiness -->
+        <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-5 space-y-2 shadow-xs">
+          <div class="flex items-center gap-2">
+            <span class="w-6 h-6 rounded-md bg-emerald-500/10 text-emerald-500 flex items-center justify-center font-bold text-xs">4</span>
+            <h3 class="font-bold text-sm text-[var(--foreground)]">Resiliencia vs Tenacidad (Crashworthiness)</h3>
+          </div>
+          <p class="text-xs text-[var(--muted-foreground)] leading-relaxed">
+            <strong>Módulo de Resiliencia (\(U_r\)):</strong> Energía absorbida elásticamente por unidad de volumen (\(J/m^3\)). Área bajo la curva elástica. Ideal para muelles y barras estabilizadoras.<br>
+            <strong>Tenacidad (\(U_t\)):</strong> Energía total absorbida hasta la fractura. Área total bajo la curva.
+          </p>
+          <div class="p-2.5 rounded-lg bg-[var(--background)] border border-[var(--border)] font-mono text-xs text-emerald-500 flex justify-between items-center">
+            <span>\(U_r \approx \frac{\sigma_y^2}{2E} \quad | \quad U_t = \int_0^{\epsilon_f} \sigma d\epsilon\)</span>
+            <span class="text-[var(--muted-foreground)] text-[11px]">Integral energética</span>
+          </div>
+          <p class="text-[11px] text-[var(--muted-foreground)]">
+            <strong>Impacto automotriz en choque:</strong> La energía cinética del auto (\(E_k = \frac{1}{2} m v^2\)) a 60 km/h debe ser absorbida enteramente por la tenacidad plástica del chasis. Un material ultrarresistente pero frágil no sirve como crash box porque fracturaría sin disipar energía.
+          </p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- TAB 4: RETO DE SELECCIÓN AUTOMOTRIZ (QUIZ) -->
+    <div id="view-quiz" class="hidden space-y-5">
+      <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-5 shadow-xs">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h2 class="font-bold text-base text-[var(--foreground)]">Retos de Selección de Materiales Automotrices</h2>
+            <p class="text-xs text-[var(--muted-foreground)]">Pon a prueba tu criterio ingenieril resolviendo 4 casos reales de especificación en la industria automotriz.</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-xs text-[var(--muted-foreground)]">Puntuación:</span>
+            <span id="quiz-score" class="font-mono font-bold text-sm text-blue-600 dark:text-blue-400">0 / 4</span>
+          </div>
+        </div>
+
+        <div id="quiz-container" class="space-y-4">
+          <!-- Quiz questions injected via JS -->
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="border-t border-[var(--border)] bg-[var(--card)] py-3 mt-auto">
+    <div class="max-w-7xl mx-auto px-4 text-center text-xs text-[var(--muted-foreground)]">
+      Simulador Pedagógico de Ciencia e Ingeniería de Materiales &bull; Especialidad en Diseño y Estructura Automotriz &bull; Basado en normas ASTM E8M e ISO 6892-1
+    </div>
+  </footer>
+
+  <!-- JAVASCRIPT LOGIC -->
+  <script>
+    /* =========================================================================
+       1. DATABASE OF REAL AUTOMOTIVE MATERIALS
+       ========================================================================= */
+    const MATERIALS = {
+      dp600: {
+        name: "Acero Dual-Phase DP600",
+        tag: "DP600",
+        color: "#2563eb",
+        E: 210000, // MPa
+        Sy: 360,    // MPa
+        UTS: 620,   // MPa
+        epsUTS: 0.14,
+        epsF: 0.22,
+        sigF: 460,  // MPa
+        isBrittle: false,
+        hasLuders: false,
+        density: 7.85,
+        component: "Pilar B y Punteras Frontales Deformables (Crash Boxes)",
+        desc: "El acero DP600 posee una matriz ferrítica blanda que aporta ductilidad combinada con islas de martensita dura que elevan la resistencia. Su alta tenacidad le permite arrugarse de forma progresiva en impactos frontales a 64 km/h (Euro NCAP), disipando megajulios de energía cinética antes de transmitir aceleraciones letales al habitáculo.",
+        functionTag: "Absorción de Choque (Alta Tenacidad)",
+        micro: {
+          elastic: "Zona elástica: Estiramiento elástico de la red cúbica centrada en el cuerpo (BCC) de la ferrita y tetragonal de la martensita. Al soltar la carga, vuelve a L₀.",
+          yielding: "Límite de fluencia (360 MPa): Comienza el deslizamiento de dislocaciones en los granos ferríticos más blandos.",
+          hardening: "Acritud plástica: Las dislocaciones se multiplican y se bloquean contra las partículas duras de martensita, requiriendo más esfuerzo para deformarse.",
+          necking: "Estricción alcanzada (UTS 620 MPa): La probeta ya no se alarga uniformemente. Se focaliza un cuello central debido a inestabilidad geométrica plástica.",
+          fracture: "Fractura dúctil: Coalescencia de microhuecos alrededor de los granos de martensita generando una clásica superficie de fractura de copa y cono a 45°."
+        }
+      },
+      boro: {
+        name: "Acero al Boro 22MnB5 (UHSS)",
+        tag: "22MnB5",
+        color: "#dc2626",
+        E: 210000,
+        Sy: 1100,
+        UTS: 1550,
+        epsUTS: 0.045,
+        epsF: 0.075,
+        sigF: 1350,
+        isBrittle: false,
+        hasLuders: false,
+        density: 7.85,
+        component: "Celda de Supervivencia y Viga Anti-Intrusión Lateral",
+        desc: "Acero estampado en caliente y templado en troquel. Su microestructura 100% martensítica otorga una resistencia extrema (>1500 MPa). Su objetivo en el vehículo es NO deformarse para impedir que el parachoques de una SUV o un poste penetre en el habitáculo durante un impacto lateral.",
+        functionTag: "Prevención de Intrusión (Ultra Alta Resistencia)",
+        micro: {
+          elastic: "Comportamiento elástico muy prolongado hasta los 1100 MPa gracias a la alta densidad de dislocaciones preexistentes y carbono en solución sólida.",
+          yielding: "Fluencia muy elevada: Requiere tensiones masivas para vencer los obstáculos de los listones martensíticos.",
+          hardening: "Bajo endurecimiento por deformación relativo debido a la limitada movilidad de deslizamiento en la red distorsionada.",
+          necking: "Estricción muy temprana y reducida a partir del 4.5% de deformación.",
+          fracture: "Fractura de baja ductilidad (casi plana con microhoyuelos muy finos). Ruptura rápida de alta energía elástica liberada."
+        }
+      },
+      al6061: {
+        name: "Aluminio AA6061-T6",
+        tag: "AA6061-T6",
+        color: "#10b981",
+        E: 69000,
+        Sy: 275,
+        UTS: 310,
+        epsUTS: 0.085,
+        epsF: 0.16,
+        sigF: 240,
+        isBrittle: false,
+        hasLuders: false,
+        density: 2.70,
+        component: "Brazos de Suspensión A-arm, Capó y Subchasis",
+        desc: "Aleación ligera tratada térmicamente con precipitados de Mg2Si. Con una densidad de solo 2.7 g/cm³, reduce la 'masa no suspendida' en las ruedas, mejorando drásticamente el contacto neumático-asfalto, la respuesta dinámica y reduciendo el consumo de combustible.",
+        functionTag: "Aligeramiento Dinámico (Masa No Suspendida)",
+        micro: {
+          elastic: "Pendiente elástica mucho más suave (E=69 GPa). Flecta 3 veces más que el acero para la misma sección elástica.",
+          yielding: "Las dislocaciones cortan o contornean los precipitados nanométricos de Mg2Si (mecanismo de Orowan) a 275 MPa.",
+          hardening: "Moderado endurecimiento por deformación en la red FCC (cúbica centrada en las caras) del aluminio.",
+          necking: "Estricción suave y visible en la zona central calibrada.",
+          fracture: "Fractura dúctil clásica con acabado mate y labio cortante perimetral."
+        }
+      },
+      gg25: {
+        name: "Fundición Gris GG25 (ASTM Class 35)",
+        tag: "GG25",
+        color: "#a855f7",
+        E: 110000,
+        Sy: 250,
+        UTS: 250,
+        epsUTS: 0.0055,
+        epsF: 0.006,
+        sigF: 250,
+        isBrittle: true,
+        hasLuders: false,
+        density: 7.20,
+        component: "Discos de Freno Ventilados y Bloques de Motor",
+        desc: "Posee láminas de grafito interconectadas que absorben las vibraciones acústicas (eliminando chirridos de frenos) y conducen el calor generado en frenadas extremas. Sin embargo, en tracción pura es completamente frágil y rompe sin previo aviso sin deformación plástica.",
+        functionTag: "Disipación Térmica & Amortiguamiento NVH",
+        micro: {
+          elastic: "Comportamiento no lineal elástico rápido. Las puntas de las láminas de grafito actúan como concentradores de tensión internos masivos.",
+          yielding: "No posee régimen plástico apreciable. Prácticamente no existe deslizamiento de dislocaciones macroscópico.",
+          hardening: "Nulo. Pasa de comportamiento elástico a propagación inestable de grietas.",
+          necking: "Sin estricción alguna. El diámetro transversal permanece prácticamente idéntico.",
+          fracture: "Fractura frágil por clivaje a 90° respecto al eje de tracción, con brillo cristalino y sonido metálico seco."
+        }
+      },
+      pa66: {
+        name: "Polímero PA66-GF30 (30% Fibra de Vidrio)",
+        tag: "PA66-GF30",
+        color: "#f59e0b",
+        E: 8800,
+        Sy: 120,
+        UTS: 175,
+        epsUTS: 0.026,
+        epsF: 0.034,
+        sigF: 160,
+        isBrittle: false,
+        hasLuders: false,
+        density: 1.36,
+        component: "Múltiple de Admisión de Aire y Carcasas Bajo Capó",
+        desc: "Termoplástico técnico reforzado con fibras cortas de vidrio. Soporta temperaturas de motor de hasta 140°C y contacto con aceites e hidrocarburos. Pesa un 50% menos que el aluminio fundido original y reduce el costo de fabricación por moldeo por inyección.",
+        functionTag: "Reducción de Peso y Costo en Componentes de Motor",
+        micro: {
+          elastic: "Módulo elástico bajo (8.8 GPa). Estiramiento y desenredo de las cadenas macromoleculares de poliamida reforzadas por las fibras de vidrio.",
+          yielding: "Fluencia viscoelástica y deslizamiento interfacial fibra-matriz a 120 MPa.",
+          hardening: "Orientación de cadenas poliméricas en la dirección de la carga.",
+          necking: "Formación de estrías y microblanqueamiento por esfuerzo (stress whitening).",
+          fracture: "Desprendimiento (pull-out) de las fibras de vidrio y fractura semidúctil de la matriz polimérica."
+        }
+      },
+      aisi1020: {
+        name: "Acero Dulce AISI 1020",
+        tag: "AISI 1020",
+        color: "#94a3b8",
+        E: 205000,
+        Sy: 260,
+        UTS: 440,
+        epsUTS: 0.18,
+        epsF: 0.32,
+        sigF: 330,
+        isBrittle: false,
+        hasLuders: true,
+        density: 7.85,
+        component: "Ganchos de Remolque, Soportes de Escape y Bridas",
+        desc: "Acero hipoeutectoide clásico con 0.20% de carbono. Presenta el fenómeno característico de meseta de fluencia con bandas de Lüders debido al anclaje de dislocaciones por átomos de carbono (atmósferas de Cottrell). Altísima ductilidad (>30%).",
+        functionTag: "Conformabilidad y Piezas Auxiliares Soldables",
+        micro: {
+          elastic: "Deformación elástica lineal hasta el límite de fluencia superior (295 MPa).",
+          yielding: "Fenómeno de Cottrell: Las dislocaciones se desanclan súbitamente de los átomos intersticiales de carbono, cayendo a la fluencia inferior (260 MPa) con bandas de Lüders visibles.",
+          hardening: "Extensa fase de acritud uniforme con gran multiplicación de dislocaciones en la ferrita.",
+          necking: "Gran estricción central a partir del 18% de elongación.",
+          fracture: "Ruptura dúctil pronunciada con reducción de área superior al 50% y cono profundo."
+        }
+      }
+    };
+
+    /* =========================================================================
+       2. SIMULATOR STATE VARIABLES
+       ========================================================================= */
+    let currentMatKey = 'dp600';
+    let currentMat = MATERIALS[currentMatKey];
+    let isRunning = false;
+    let animFrameId = null;
+    let currentStrain = 0.0; // Current strain (0.0 to epsF)
+    let simSpeed = 1.0;
+    let isFractured = false;
+    let audioEnabled = false;
+    let audioCtx = null;
+    let motorOsc = null;
+    let motorGain = null;
+
+    // Specimen standard geometry
+    const L0 = 50.0; // mm
+    const d0 = 12.5; // mm
+    const A0 = Math.PI * Math.pow(d0 / 2, 2); // ~122.718 mm²
+
+    /* =========================================================================
+       3. STRESS CALCULATION FUNCTION FOR MATERIALS
+       ========================================================================= */
+    function getStress(mat, eps, isTrueStress = false) {
+      if (eps <= 0) return 0;
+      if (eps > mat.epsF) return 0;
+
+      const epsY = mat.Sy / mat.E;
+      let engStress = 0;
+
+      if (mat.isBrittle) {
+        // Linear or slightly non-linear brittle fracture
+        engStress = mat.E * eps;
+        if (engStress > mat.UTS) engStress = mat.UTS;
+      } else if (mat.hasLuders) {
+        // AISI 1020 with upper/lower yield and Luders plateau
+        const epsUpper = 295 / mat.E;
+        const epsLudersEnd = 0.022;
+        if (eps <= epsUpper) {
+          engStress = mat.E * eps;
+        } else if (eps <= epsLudersEnd) {
+          // Plateau around 260 MPa with slight oscillation
+          engStress = mat.Sy + Math.sin(eps * 1000) * 4;
+        } else if (eps <= mat.epsUTS) {
+          // Hardening (Swift/Hollomon)
+          const p = (eps - epsLudersEnd) / (mat.epsUTS - epsLudersEnd);
+          engStress = mat.Sy + (mat.UTS - mat.Sy) * Math.pow(p, 0.45);
+        } else {
+          // Necking
+          const p = (eps - mat.epsUTS) / (mat.epsF - mat.epsUTS);
+          engStress = mat.UTS - (mat.UTS - mat.sigF) * Math.pow(p, 1.25);
+        }
+      } else {
+        // Standard ductile engineering curve (DP600, Boro, Al6061, PA66)
+        if (eps <= epsY) {
+          engStress = mat.E * eps;
+        } else if (eps <= mat.epsUTS) {
+          // Hollomon / Ludwik hardening
+          const p = (eps - epsY) / (mat.epsUTS - epsY);
+          engStress = mat.Sy + (mat.UTS - mat.Sy) * Math.pow(p, 0.42);
+        } else {
+          // Post-UTS necking drop
+          const p = (eps - mat.epsUTS) / (mat.epsF - mat.epsUTS);
+          engStress = mat.UTS - (mat.UTS - mat.sigF) * Math.pow(p, 1.3);
+        }
+      }
+
+      if (isTrueStress) {
+        // True stress: sigma_true = sigma_eng * (1 + eps_eng) before necking
+        if (eps <= mat.epsUTS) {
+          return engStress * (1 + eps);
+        } else {
+          // In necking, true stress keeps rising because true area shrinks much faster
+          const p = (eps - mat.epsUTS) / (mat.epsF - mat.epsUTS);
+          const trueUTS = mat.UTS * (1 + mat.epsUTS);
+          const trueF = trueUTS * (1 + p * 0.45);
+          return trueF;
+        }
+      }
+
+      return engStress;
+    }
+
+    /* Calculate Resilience Ur = Sy^2 / (2E) in kJ/m³ */
+    function calcResilience(mat) {
+      return (Math.pow(mat.Sy, 2) / (2 * mat.E)) * 1000; // in kJ/m³
+    }
+
+    /* Calculate Toughness Ut via numerical integration in MJ/m³ */
+    function calcToughness(mat) {
+      let area = 0;
+      const steps = 200;
+      const dEps = mat.epsF / steps;
+      for (let i = 0; i < steps; i++) {
+        const epsMid = (i + 0.5) * dEps;
+        area += getStress(mat, epsMid, false) * dEps;
+      }
+      return area; // in MPa = MJ/m³
+    }
+
+    /* =========================================================================
+       4. AUDIO SYNTHESIZER (WEB AUDIO API)
+       ========================================================================= */
+    function initAudio() {
+      if (!audioCtx) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AudioContext();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    function toggleAudio() {
+      audioEnabled = !audioEnabled;
+      const onIcon = document.getElementById('icon-sound-on');
+      const offIcon = document.getElementById('icon-sound-off');
+      if (audioEnabled) {
+        initAudio();
+        onIcon.classList.remove('hidden');
+        offIcon.classList.add('hidden');
+        if (isRunning) startMotorSound();
+      } else {
+        onIcon.classList.add('hidden');
+        offIcon.classList.remove('hidden');
+        stopMotorSound();
+      }
+    }
+
+    function startMotorSound() {
+      if (!audioEnabled || !audioCtx) return;
+      try {
+        if (!motorOsc) {
+          motorOsc = audioCtx.createOscillator();
+          motorGain = audioCtx.createGain();
+          const filter = audioCtx.createBiquadFilter();
+
+          motorOsc.type = 'triangle';
+          motorOsc.frequency.setValueAtTime(65, audioCtx.currentTime); // Hydraulic hum
+
+          filter.type = 'lowpass';
+          filter.frequency.setValueAtTime(140, audioCtx.currentTime);
+
+          motorGain.gain.setValueAtTime(0.06, audioCtx.currentTime);
+
+          motorOsc.connect(filter);
+          filter.connect(motorGain);
+          motorGain.connect(audioCtx.destination);
+          motorOsc.start();
+        }
+      } catch (e) {
+        console.warn("Audio start error", e);
+      }
+    }
+
+    function stopMotorSound() {
+      if (motorOsc) {
+        try {
+          motorOsc.stop();
+          motorOsc.disconnect();
+        } catch (e) {}
+        motorOsc = null;
+      }
+    }
+
+    function playSnapSound() {
+      if (!audioEnabled || !audioCtx) return;
+      try {
+        const now = audioCtx.currentTime;
+        
+        // 1. Noise burst for violent rupture
+        const bufferSize = audioCtx.sampleRate * 0.15;
+        const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+          data[i] = Math.random() * 2 - 1;
+        }
+
+        const noise = audioCtx.createBufferSource();
+        noise.buffer = buffer;
+
+        const noiseFilter = audioCtx.createBiquadFilter();
+        noiseFilter.type = 'bandpass';
+        noiseFilter.frequency.setValueAtTime(1200, now);
+        noiseFilter.Q.setValueAtTime(3, now);
+
+        const noiseGain = audioCtx.createGain();
+        noiseGain.gain.setValueAtTime(0.5, now);
+        noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+
+        noise.connect(noiseFilter);
+        noiseFilter.connect(noiseGain);
+        noiseGain.connect(audioCtx.destination);
+        noise.start(now);
+
+        // 2. Metallic resonant ping
+        const osc = audioCtx.createOscillator();
+        const oscGain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(880, now);
+        osc.frequency.exponentialRampToValueAtTime(320, now + 0.3);
+
+        oscGain.gain.setValueAtTime(0.4, now);
+        oscGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.35);
+
+        osc.connect(oscGain);
+        oscGain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.35);
+      } catch (e) {
+        console.warn("Snap audio error", e);
+      }
+    }
+
+    /* =========================================================================
+       5. SIMULATION LOOP & USER CONTROLS
+       ========================================================================= */
+    function toggleTest() {
+      if (isFractured) {
+        resetTest();
+      }
+
+      if (isRunning) {
+        pauseTest();
+      } else {
+        startTest();
+      }
+    }
+
+    function startTest() {
+      isRunning = true;
+      document.getElementById('btn-play-text').textContent = "Pausar Ensayo";
+      document.getElementById('btn-play').classList.remove('bg-blue-600', 'hover:bg-blue-700');
+      document.getElementById('btn-play').classList.add('bg-amber-600', 'hover:bg-amber-700');
+      document.getElementById('specimen-status-badge').textContent = "En Tracción";
+      document.getElementById('specimen-status-badge').className = "px-2 py-0.5 text-xs font-semibold rounded bg-blue-500/10 text-blue-500 border border-blue-500/20";
+      
+      startMotorSound();
+      lastTimestamp = performance.now();
+      animLoop(lastTimestamp);
+    }
+
+    function pauseTest() {
+      isRunning = false;
+      document.getElementById('btn-play-text').textContent = "Reanudar";
+      document.getElementById('btn-play').classList.remove('bg-amber-600', 'hover:bg-amber-700');
+      document.getElementById('btn-play').classList.add('bg-blue-600', 'hover:bg-blue-700');
+      document.getElementById('specimen-status-badge').textContent = "En Pausa";
+      document.getElementById('specimen-status-badge').className = "px-2 py-0.5 text-xs font-semibold rounded bg-amber-500/10 text-amber-500 border border-amber-500/20";
+      
+      stopMotorSound();
+      if (animFrameId) cancelAnimationFrame(animFrameId);
+    }
+
+    function resetTest() {
+      pauseTest();
+      currentStrain = 0.0;
+      isFractured = false;
+      document.getElementById('btn-play-text').textContent = "Iniciar Ensayo";
+      document.getElementById('btn-play').classList.remove('bg-amber-600', 'hover:bg-amber-700');
+      document.getElementById('btn-play').classList.add('bg-blue-600', 'hover:bg-blue-700');
+      document.getElementById('specimen-status-badge').textContent = "En Reposo";
+      document.getElementById('specimen-status-badge').className = "px-2 py-0.5 text-xs font-semibold rounded bg-slate-500/10 text-slate-500 border border-slate-500/20";
+      
+      document.getElementById('necking-indicator').classList.add('hidden');
+      document.getElementById('fracture-indicator').classList.add('hidden');
+      document.getElementById('strain-slider').value = 0;
+      document.getElementById('slider-val').textContent = "0.00%";
+      
+      updateTelemetryAndDraw();
+    }
+
+    function manualStrainChange(val) {
+      if (isRunning) pauseTest();
+      currentStrain = parseFloat(val);
+      if (currentStrain >= currentMat.epsF) {
+        currentStrain = currentMat.epsF;
+        triggerFracture();
+      } else {
+        isFractured = false;
+        document.getElementById('fracture-indicator').classList.add('hidden');
+      }
+      updateTelemetryAndDraw();
+    }
+
+    function setSpeed(sp) {
+      simSpeed = sp;
+      document.querySelectorAll('.speed-btn').forEach(btn => {
+        btn.classList.remove('bg-blue-600/20', 'text-blue-600', 'dark:text-blue-400', 'font-bold', 'border-blue-500/30');
+        btn.classList.add('bg-[var(--background)]');
+      });
+      event.target.classList.remove('bg-[var(--background)]');
+      event.target.classList.add('bg-blue-600/20', 'text-blue-600', 'dark:text-blue-400', 'font-bold', 'border-blue-500/30');
+    }
+
+    let lastTimestamp = 0;
+    function animLoop(timestamp) {
+      if (!isRunning) return;
+
+      const dt = (timestamp - lastTimestamp) / 1000;
+      lastTimestamp = timestamp;
+
+      // Realistic strain rate scaling (calibrated for smooth observation)
+      const strainRate = 0.018 * simSpeed;
+      currentStrain += strainRate * dt;
+
+      if (currentStrain >= currentMat.epsF) {
+        currentStrain = currentMat.epsF;
+        triggerFracture();
+        updateTelemetryAndDraw();
+        return;
+      }
+
+      updateTelemetryAndDraw();
+      animFrameId = requestAnimationFrame(animLoop);
+    }
+
+    function triggerFracture() {
+      isFractured = true;
+      isRunning = false;
+      stopMotorSound();
+      playSnapSound();
+      
+      document.getElementById('btn-play-text').textContent = "Nueva Probeta";
+      document.getElementById('specimen-status-badge').textContent = "Fracturado";
+      document.getElementById('specimen-status-badge').className = "px-2 py-0.5 text-xs font-semibold rounded bg-red-500/10 text-red-500 border border-red-500/20";
+      
+      document.getElementById('necking-indicator').classList.add('hidden');
+      document.getElementById('fracture-indicator').classList.remove('hidden');
+      document.getElementById('fracture-desc').textContent = currentMat.isBrittle 
+        ? "Fractura Frágil por Clivaje (90° sin estricción)" 
+        : `Fractura Dúctil tipo Copa y Cono (Elongación final: ${(currentMat.epsF * 100).toFixed(1)}%)`;
+    }
+
+    function changeMaterial(key) {
+      currentMatKey = key;
+      currentMat = MATERIALS[key];
+      
+      // Update slider max to adapt to material ductilty
+      const slider = document.getElementById('strain-slider');
+      slider.max = (currentMat.epsF * 1.05).toFixed(4);
+
+      // Update static badges and text
+      document.getElementById('material-badge-graph').textContent = currentMat.tag;
+      document.getElementById('stat-e').textContent = (currentMat.E / 1000).toFixed(0) + " GPa";
+      document.getElementById('stat-sy').textContent = currentMat.Sy + " MPa";
+      document.getElementById('stat-uts').textContent = currentMat.UTS + " MPa";
+      document.getElementById('stat-ef').textContent = (currentMat.epsF * 100).toFixed(1) + " %";
+
+      document.getElementById('auto-component-title').textContent = currentMat.component;
+      document.getElementById('auto-component-desc').textContent = currentMat.desc;
+      document.getElementById('auto-function-tag').textContent = currentMat.functionTag;
+
+      const ur = calcResilience(currentMat);
+      const ut = calcToughness(currentMat);
+      document.getElementById('live-ur').textContent = ur.toFixed(2) + " kJ/m³";
+      document.getElementById('live-ut').textContent = ut.toFixed(1) + " MJ/m³";
+
+      resetTest();
+    }
+
+    /* =========================================================================
+       6. TELEMETRY UPDATE & TEXT DISPLAY
+       ========================================================================= */
+    function updateTelemetryAndDraw() {
+      // 1. Current physics values
+      const sig = getStress(currentMat, currentStrain, false);
+      const deltaL = L0 * currentStrain;
+      const forceKN = (sig * A0) / 1000.0;
+      
+      // Poisson ratio effect on diameter (plastic vs elastic)
+      const epsY = currentMat.Sy / currentMat.E;
+      let nu = currentStrain < epsY ? 0.30 : 0.50; // Poisson's ratio
+      let dInstant = d0;
+      let redArea = 0;
+
+      if (!currentMat.isBrittle) {
+        if (currentStrain <= currentMat.epsUTS) {
+          dInstant = d0 / Math.sqrt(1 + currentStrain);
+        } else {
+          // Accelerated necking localized diameter reduction
+          const p = (currentStrain - currentMat.epsUTS) / (currentMat.epsF - currentMat.epsUTS);
+          const dUTS = d0 / Math.sqrt(1 + currentMat.epsUTS);
+          dInstant = dUTS * (1 - 0.28 * Math.pow(p, 0.7));
+        }
+        const aInstant = Math.PI * Math.pow(dInstant / 2, 2);
+        redArea = ((A0 - aInstant) / A0) * 100;
+      }
+
+      // Update HUD & Telemetry text
+      document.getElementById('live-stress').textContent = sig.toFixed(1);
+      document.getElementById('live-strain').textContent = (currentStrain * 100).toFixed(2);
+      document.getElementById('live-force').textContent = forceKN.toFixed(2);
+      
+      document.getElementById('hud-deltaL').textContent = deltaL.toFixed(3) + " mm";
+      document.getElementById('hud-diam').textContent = dInstant.toFixed(2) + " mm";
+      document.getElementById('hud-ra').textContent = redArea.toFixed(1) + " %";
+      
+      document.getElementById('strain-slider').value = currentStrain;
+      document.getElementById('slider-val').textContent = (currentStrain * 100).toFixed(2) + "%";
+
+      // Microstructural description updates according to current state
+      const microEl = document.getElementById('micro-explanation');
+      const neckAlert = document.getElementById('necking-indicator');
+
+      if (isFractured) {
+        microEl.textContent = currentMat.micro.fracture;
+        neckAlert.classList.add('hidden');
+      } else if (currentStrain >= currentMat.epsUTS && !currentMat.isBrittle) {
+        microEl.textContent = currentMat.micro.necking;
+        neckAlert.classList.remove('hidden');
+      } else if (currentStrain > (currentMat.Sy / currentMat.E) * 1.5) {
+        microEl.textContent = currentMat.micro.hardening;
+        neckAlert.classList.add('hidden');
+      } else if (currentStrain >= epsY) {
+        microEl.textContent = currentMat.micro.yielding;
+        neckAlert.classList.add('hidden');
+      } else {
+        microEl.textContent = currentMat.micro.elastic;
+        neckAlert.classList.add('hidden');
+      }
+
+      // Render canvases
+      renderSpecimen(dInstant, deltaL);
+      renderGraph();
+    }
+
+    /* =========================================================================
+       7. RENDER SPECIMEN IN MTS UNIVERSAL MACHINE (CANVAS)
+       ========================================================================= */
+    const specCanvas = document.getElementById('specimenCanvas');
+    const specCtx = specCanvas.getContext('2d');
+
+    function renderSpecimen(dInstant, deltaL) {
+      const w = specCanvas.width;
+      const h = specCanvas.height;
+      const cx = w / 2;
+
+      specCtx.clearRect(0, 0, w, h);
+
+      // Colors adapted from current environment
+      const isDark = !document.documentElement.classList.contains('light');
+      const metalBase = isDark ? '#334155' : '#cbd5e1';
+      const metalHighlight = isDark ? '#64748b' : '#94a3b8';
+      const gripColor = isDark ? '#1e293b' : '#64748b';
+
+      // 1. Draw Columns & Machine Frame
+      specCtx.fillStyle = metalBase;
+      // Left column
+      specCtx.fillRect(20, 10, 18, h - 20);
+      specCtx.fillStyle = metalHighlight;
+      specCtx.fillRect(24, 10, 4, h - 20);
+
+      // Right column
+      specCtx.fillStyle = metalBase;
+      specCtx.fillRect(w - 38, 10, 18, h - 20);
+      specCtx.fillStyle = metalHighlight;
+      specCtx.fillRect(w - 34, 10, 4, h - 20);
+
+      // Fixed Bottom Base
+      specCtx.fillStyle = gripColor;
+      specCtx.fillRect(15, h - 55, w - 30, 45);
+      specCtx.fillStyle = isDark ? '#475569' : '#94a3b8';
+      specCtx.fillRect(cx - 35, h - 85, 70, 32); // Lower grip holder
+
+      // Moving Crosshead (displaced upward based on deltaL * visual scale)
+      const visualStretch = currentStrain * 90; // visual elongation in pixels
+      const crossheadY = 50 - visualStretch;
+
+      // Upper hydraulic crosshead
+      specCtx.fillStyle = gripColor;
+      specCtx.fillRect(15, crossheadY, w - 30, 40);
+      specCtx.fillStyle = '#2563eb';
+      specCtx.fillRect(cx - 40, crossheadY + 30, 80, 8); // Load cell indicator
+      specCtx.fillStyle = isDark ? '#475569' : '#94a3b8';
+      specCtx.fillRect(cx - 35, crossheadY + 38, 70, 32); // Upper grip holder
+
+      // 2. Draw Specimen (ASTM E8 Dogbone)
+      const topGripY = crossheadY + 70;
+      const bottomGripY = h - 85;
+      const specimenTotalH = bottomGripY - topGripY;
+
+      // Specimen dimensions in pixels
+      const gripW = 54;
+      const baseGaugeW = 32;
+      // Necking ratio
+      const neckFactor = (dInstant / d0);
+      const neckW = baseGaugeW * neckFactor;
+
+      specCtx.save();
+
+      // Specimen material color gradient
+      const specGrad = specCtx.createLinearGradient(cx - gripW/2, 0, cx + gripW/2, 0);
+      if (currentMatKey === 'dp600' || currentMatKey === 'boro' || currentMatKey === 'aisi1020') {
+        specGrad.addColorStop(0, '#64748b');
+        specGrad.addColorStop(0.5, '#e2e8f0');
+        specGrad.addColorStop(1, '#475569');
+      } else if (currentMatKey === 'al6061') {
+        specGrad.addColorStop(0, '#94a3b8');
+        specGrad.addColorStop(0.5, '#f8fafc');
+        specGrad.addColorStop(1, '#64748b');
+      } else if (currentMatKey === 'gg25') {
+        specGrad.addColorStop(0, '#4b5563');
+        specGrad.addColorStop(0.5, '#9ca3af');
+        specGrad.addColorStop(1, '#374151');
+      } else {
+        // PA66 polymer (matte amber)
+        specGrad.addColorStop(0, '#b45309');
+        specGrad.addColorStop(0.5, '#fbbf24');
+        specGrad.addColorStop(1, '#92400e');
+      }
+
+      specCtx.fillStyle = specGrad;
+
+      if (!isFractured) {
+        // Continuous Dog-Bone Specimen
+        specCtx.beginPath();
+        // Top grip
+        specCtx.moveTo(cx - gripW/2, topGripY);
+        specCtx.lineTo(cx + gripW/2, topGripY);
+        specCtx.lineTo(cx + gripW/2, topGripY + 30);
+        
+        // Transition to gauge section
+        const gaugeTopY = topGripY + 50;
+        const gaugeBottomY = bottomGripY - 50;
+        const gaugeMidY = (gaugeTopY + gaugeBottomY) / 2;
+
+        specCtx.bezierCurveTo(cx + gripW/2, topGripY + 40, cx + baseGaugeW/2, gaugeTopY - 10, cx + baseGaugeW/2, gaugeTopY);
+
+        // Right side of gauge length with necking at center
+        specCtx.bezierCurveTo(cx + baseGaugeW/2, gaugeMidY - 20, cx + neckW/2, gaugeMidY - 10, cx + neckW/2, gaugeMidY);
+        specCtx.bezierCurveTo(cx + neckW/2, gaugeMidY + 10, cx + baseGaugeW/2, gaugeMidY + 20, cx + baseGaugeW/2, gaugeBottomY);
+
+        // Bottom transition and grip
+        specCtx.bezierCurveTo(cx + baseGaugeW/2, gaugeBottomY + 10, cx + gripW/2, bottomGripY - 40, cx + gripW/2, bottomGripY - 30);
+        specCtx.lineTo(cx + gripW/2, bottomGripY);
+        specCtx.lineTo(cx - gripW/2, bottomGripY);
+        specCtx.lineTo(cx - gripW/2, bottomGripY - 30);
+
+        // Left side transition
+        specCtx.bezierCurveTo(cx - gripW/2, bottomGripY - 40, cx - baseGaugeW/2, gaugeBottomY + 10, cx - baseGaugeW/2, gaugeBottomY);
+        specCtx.bezierCurveTo(cx - baseGaugeW/2, gaugeMidY + 20, cx - neckW/2, gaugeMidY + 10, cx - neckW/2, gaugeMidY);
+        specCtx.bezierCurveTo(cx - neckW/2, gaugeMidY - 10, cx - baseGaugeW/2, gaugeMidY - 20, cx - baseGaugeW/2, gaugeTopY);
+        specCtx.bezierCurveTo(cx - baseGaugeW/2, gaugeTopY - 10, cx - gripW/2, topGripY + 40, cx - gripW/2, topGripY + 30);
+
+        specCtx.closePath();
+        specCtx.fill();
+        specCtx.strokeStyle = 'rgba(0,0,0,0.2)';
+        specCtx.stroke();
+
+        // Extensometer knife edges attached to gauge length
+        specCtx.strokeStyle = '#ef4444';
+        specCtx.lineWidth = 2;
+        // Upper mark
+        specCtx.beginPath();
+        specCtx.moveTo(cx - baseGaugeW/2 - 12, gaugeTopY + 10);
+        specCtx.lineTo(cx - baseGaugeW/2, gaugeTopY + 10);
+        specCtx.stroke();
+        // Lower mark
+        specCtx.beginPath();
+        specCtx.moveTo(cx - baseGaugeW/2 - 12, gaugeBottomY - 10);
+        specCtx.lineTo(cx - baseGaugeW/2, gaugeBottomY - 10);
+        specCtx.stroke();
+        // Extensometer rod
+        specCtx.strokeStyle = '#3b82f6';
+        specCtx.beginPath();
+        specCtx.moveTo(cx - baseGaugeW/2 - 12, gaugeTopY + 10);
+        specCtx.lineTo(cx - baseGaugeW/2 - 12, gaugeBottomY - 10);
+        specCtx.stroke();
+
+      } else {
+        // Fractured Specimen (two halves separated by gap)
+        const gap = 16;
+        const midY = (topGripY + bottomGripY) / 2;
+
+        // Top half
+        specCtx.beginPath();
+        specCtx.moveTo(cx - gripW/2, topGripY);
+        specCtx.lineTo(cx + gripW/2, topGripY);
+        specCtx.lineTo(cx + gripW/2, topGripY + 30);
+        specCtx.lineTo(cx + neckW/2, midY - gap/2);
+        
+        // Fracture surface: cup and cone or brittle flat
+        if (currentMat.isBrittle) {
+          specCtx.lineTo(cx - neckW/2, midY - gap/2); // straight cleavage
+        } else {
+          // Cup (cone cavity)
+          specCtx.lineTo(cx, midY - gap/2 - 5);
+          specCtx.lineTo(cx - neckW/2, midY - gap/2);
+        }
+        specCtx.lineTo(cx - gripW/2, topGripY + 30);
+        specCtx.closePath();
+        specCtx.fill();
+        specCtx.stroke();
+
+        // Bottom half
+        specCtx.beginPath();
+        specCtx.moveTo(cx - gripW/2, bottomGripY);
+        specCtx.lineTo(cx + gripW/2, bottomGripY);
+        specCtx.lineTo(cx + gripW/2, bottomGripY - 30);
+        specCtx.lineTo(cx + neckW/2, midY + gap/2);
+        if (currentMat.isBrittle) {
+          specCtx.lineTo(cx - neckW/2, midY + gap/2);
+        } else {
+          // Cone tip
+          specCtx.lineTo(cx, midY + gap/2 - 5);
+          specCtx.lineTo(cx - neckW/2, midY + gap/2);
+        }
+        specCtx.lineTo(cx - gripW/2, bottomGripY - 30);
+        specCtx.closePath();
+        specCtx.fill();
+        specCtx.stroke();
+      }
+
+      specCtx.restore();
+    }
+
+    /* =========================================================================
+       8. RENDER INTERACTIVE STRESS-STRAIN GRAPH (CANVAS)
+       ========================================================================= */
+    const graphCanvas = document.getElementById('graphCanvas');
+    const graphCtx = graphCanvas.getContext('2d');
+
+    function renderGraph() {
+      const w = graphCanvas.width;
+      const h = graphCanvas.height;
+      graphCtx.clearRect(0, 0, w, h);
+
+      const isDark = !document.documentElement.classList.contains('light');
+      const textColor = isDark ? '#94a3b8' : '#475569';
+      const gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
+      const axisColor = isDark ? '#475569' : '#cbd5e1';
+
+      // Graph Paddings
+      const padLeft = 65;
+      const padRight = 35;
+      const padTop = 30;
+      const padBottom = 45;
+      const plotW = w - padLeft - padRight;
+      const plotH = h - padTop - padBottom;
+
+      // Coordinate scaling based on current material
+      const maxStress = currentMatKey === 'boro' ? 1800 : (currentMatKey === 'pa66' ? 220 : 800);
+      const maxStrain = currentMatKey === 'aisi1020' ? 0.35 : (currentMatKey === 'boro' ? 0.10 : (currentMatKey === 'pa66' ? 0.05 : 0.25));
+
+      function toX(eps) {
+        return padLeft + (eps / maxStrain) * plotW;
+      }
+      function toY(sig) {
+        return padTop + plotH - (sig / maxStress) * plotH;
+      }
+
+      // Draw Grid & Axes Ticks
+      graphCtx.lineWidth = 1;
+      graphCtx.strokeStyle = gridColor;
+      graphCtx.fillStyle = textColor;
+      graphCtx.font = "11px monospace";
+
+      // Horizontal stress grid lines (every 200 or 50 MPa)
+      const stressStep = maxStress > 1000 ? 400 : (maxStress <= 250 ? 50 : 150);
+      for (let s = 0; s <= maxStress; s += stressStep) {
+        const y = toY(s);
+        graphCtx.beginPath();
+        graphCtx.moveTo(padLeft, y);
+        graphCtx.lineTo(padLeft + plotW, y);
+        graphCtx.stroke();
+
+        graphCtx.textAlign = "right";
+        graphCtx.fillText(s + " MPa", padLeft - 8, y + 4);
+      }
+
+      // Vertical strain grid lines
+      const strainStep = maxStrain <= 0.06 ? 0.01 : (maxStrain <= 0.15 ? 0.02 : 0.05);
+      for (let e = 0; e <= maxStrain; e += strainStep) {
+        const x = toX(e);
+        graphCtx.beginPath();
+        graphCtx.moveTo(x, padTop);
+        graphCtx.lineTo(x, padTop + plotH);
+        graphCtx.stroke();
+
+        graphCtx.textAlign = "center";
+        graphCtx.fillText((e * 100).toFixed(0) + "%", x, padTop + plotH + 16);
+      }
+
+      // Main Axes Lines
+      graphCtx.strokeStyle = axisColor;
+      graphCtx.lineWidth = 2;
+      graphCtx.beginPath();
+      // Y-axis
+      graphCtx.moveTo(padLeft, padTop);
+      graphCtx.lineTo(padLeft, padTop + plotH);
+      // X-axis
+      graphCtx.lineTo(padLeft + plotW, padTop + plotH);
+      graphCtx.stroke();
+
+      // Axis Labels
+      graphCtx.fillStyle = textColor;
+      graphCtx.font = "bold 12px sans-serif";
+      // Y-axis label
+      graphCtx.save();
+      graphCtx.translate(18, padTop + plotH / 2);
+      graphCtx.rotate(-Math.PI / 2);
+      graphCtx.textAlign = "center";
+      graphCtx.fillText("Esfuerzo Ingenieril σ (MPa)", 0, 0);
+      graphCtx.restore();
+
+      // X-axis label
+      graphCtx.textAlign = "center";
+      graphCtx.fillText("Deformación Unitaria ε (mm/mm o %)", padLeft + plotW / 2, h - 8);
+
+      const showAreas = document.getElementById('check-energy-areas').checked;
+      const showTrueCurve = document.getElementById('check-true-curve').checked;
+
+      // 1. Shaded Energy Areas (Resilience & Toughness)
+      if (showAreas) {
+        const epsY = currentMat.Sy / currentMat.E;
+
+        // Resilience Area (Green under elastic zone)
+        graphCtx.fillStyle = 'rgba(16, 185, 129, 0.20)';
+        graphCtx.beginPath();
+        graphCtx.moveTo(toX(0), toY(0));
+        graphCtx.lineTo(toX(epsY), toY(currentMat.Sy));
+        graphCtx.lineTo(toX(epsY), toY(0));
+        graphCtx.closePath();
+        graphCtx.fill();
+
+        // Toughness Area (Blue under curve up to current strain or epsF)
+        const limitStrain = Math.min(currentStrain, currentMat.epsF);
+        if (limitStrain > epsY) {
+          graphCtx.fillStyle = 'rgba(59, 130, 246, 0.15)';
+          graphCtx.beginPath();
+          graphCtx.moveTo(toX(epsY), toY(0));
+          graphCtx.lineTo(toX(epsY), toY(currentMat.Sy));
+          
+          const steps = 60;
+          const dE = (limitStrain - epsY) / steps;
+          for (let i = 1; i <= steps; i++) {
+            const e = epsY + i * dE;
+            graphCtx.lineTo(toX(e), toY(getStress(currentMat, e, false)));
+          }
+          graphCtx.lineTo(toX(limitStrain), toY(0));
+          graphCtx.closePath();
+          graphCtx.fill();
+        }
+      }
+
+      // 2. Yield offset 0.2% reference dashed line (if applicable)
+      if (!currentMat.isBrittle && !currentMat.hasLuders) {
+        const offsetEps = 0.002;
+        const offsetMaxSig = currentMat.Sy * 1.25;
+        const offsetEndEps = offsetEps + (offsetMaxSig / currentMat.E);
+
+        graphCtx.save();
+        graphCtx.setLineDash([4, 4]);
+        graphCtx.strokeStyle = 'rgba(245, 158, 11, 0.6)';
+        graphCtx.lineWidth = 1.5;
+        graphCtx.beginPath();
+        graphCtx.moveTo(toX(offsetEps), toY(0));
+        graphCtx.lineTo(toX(offsetEndEps), toY(offsetMaxSig));
+        graphCtx.stroke();
+        
+        // 0.2% marker text
+        graphCtx.fillStyle = 'rgba(245, 158, 11, 0.8)';
+        graphCtx.font = "10px monospace";
+        graphCtx.fillText("Offset 0.2%", toX(offsetEps) + 20, toY(0) + 14);
+        graphCtx.restore();
+      }
+
+      // 3. Draw Complete Projected Engineering Curve (faint background trace)
+      graphCtx.strokeStyle = isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.12)';
+      graphCtx.lineWidth = 2;
+      graphCtx.setLineDash([2, 2]);
+      graphCtx.beginPath();
+      const numPts = 150;
+      for (let i = 0; i <= numPts; i++) {
+        const e = (i / numPts) * currentMat.epsF;
+        const s = getStress(currentMat, e, false);
+        if (i === 0) graphCtx.moveTo(toX(e), toY(s));
+        else graphCtx.lineTo(toX(e), toY(s));
+      }
+      graphCtx.stroke();
+      graphCtx.setLineDash([]);
+
+      // 4. Draw True Stress Curve if toggled
+      if (showTrueCurve && !currentMat.isBrittle) {
+        graphCtx.strokeStyle = '#10b981';
+        graphCtx.lineWidth = 2;
+        graphCtx.setLineDash([4, 4]);
+        graphCtx.beginPath();
+        for (let i = 0; i <= numPts; i++) {
+          const e = (i / numPts) * currentMat.epsF;
+          const sTrue = getStress(currentMat, e, true);
+          if (i === 0) graphCtx.moveTo(toX(e), toY(sTrue));
+          else graphCtx.lineTo(toX(e), toY(sTrue));
+        }
+        graphCtx.stroke();
+        graphCtx.setLineDash([]);
+      }
+
+      // 5. Draw Active Tested Curve (up to currentStrain)
+      if (currentStrain > 0) {
+        graphCtx.strokeStyle = currentMat.color;
+        graphCtx.lineWidth = 3.5;
+        graphCtx.beginPath();
+        const activeSteps = Math.max(10, Math.floor((currentStrain / currentMat.epsF) * 120));
+        for (let i = 0; i <= activeSteps; i++) {
+          const e = (i / activeSteps) * currentStrain;
+          const s = getStress(currentMat, e, false);
+          if (i === 0) graphCtx.moveTo(toX(e), toY(s));
+          else graphCtx.lineTo(toX(e), toY(s));
+        }
+        graphCtx.stroke();
+
+        // Current Test Point Indicator
+        const currSig = getStress(currentMat, currentStrain, false);
+        const currX = toX(currentStrain);
+        const currY = toY(currSig);
+
+        // Dashed lines to axes
+        graphCtx.save();
+        graphCtx.setLineDash([3, 3]);
+        graphCtx.strokeStyle = currentMat.color;
+        graphCtx.lineWidth = 1;
+        graphCtx.beginPath();
+        graphCtx.moveTo(currX, padTop + plotH);
+        graphCtx.lineTo(currX, currY);
+        graphCtx.lineTo(padLeft, currY);
+        graphCtx.stroke();
+        graphCtx.restore();
+
+        // Animated target pulse
+        graphCtx.fillStyle = currentMat.color;
+        graphCtx.beginPath();
+        graphCtx.arc(currX, currY, 6, 0, Math.PI * 2);
+        graphCtx.fill();
+        graphCtx.strokeStyle = '#ffffff';
+        graphCtx.lineWidth = 2;
+        graphCtx.stroke();
+      }
+
+      // 6. Highlight Key Points (Yield, UTS, Fracture)
+      drawKeyPoint(currentMat.epsY || (currentMat.Sy / currentMat.E), currentMat.Sy, "σ_y (Fluencia)", "#f59e0b");
+      if (!currentMat.isBrittle) {
+        drawKeyPoint(currentMat.epsUTS, currentMat.UTS, "UTS (Máx)", "#ef4444");
+      }
+      drawKeyPoint(currentMat.epsF, currentMat.sigF, "Fractura", "#8b5cf6");
+
+      function drawKeyPoint(eps, sig, label, col) {
+        const px = toX(eps);
+        const py = toY(sig);
+        if (px > padLeft + plotW || py < padTop) return;
+
+        graphCtx.fillStyle = col;
+        graphCtx.beginPath();
+        graphCtx.arc(px, py, 4, 0, Math.PI * 2);
+        graphCtx.fill();
+
+        // Label above point
+        graphCtx.fillStyle = textColor;
+        graphCtx.font = "10px sans-serif";
+        graphCtx.textAlign = "center";
+        graphCtx.fillText(label, px, py - 8);
+      }
+    }
+
+    /* =========================================================================
+       9. COMPARISON TAB (MULTI-MATERIAL SUPERPOSITION)
+       ========================================================================= */
+    const compCanvas = document.getElementById('compareCanvas');
+    const compCtx = compCanvas.getContext('2d');
+    const activeCompareMats = {
+      dp600: true,
+      boro: true,
+      al6061: true,
+      gg25: true,
+      pa66: true,
+      aisi1020: true
+    };
+
+    function toggleCompareMat(key) {
+      activeCompareMats[key] = !activeCompareMats[key];
+      const btn = document.getElementById('btn-comp-' + key);
+      if (activeCompareMats[key]) {
+        btn.classList.add('font-semibold');
+        btn.style.opacity = "1.0";
+      } else {
+        btn.classList.remove('font-semibold');
+        btn.style.opacity = "0.35";
+      }
+      renderCompareGraph();
+    }
+
+    function renderCompareGraph() {
+      const w = compCanvas.width;
+      const h = compCanvas.height;
+      compCtx.clearRect(0, 0, w, h);
+
+      const isDark = !document.documentElement.classList.contains('light');
+      const textColor = isDark ? '#94a3b8' : '#475569';
+      const gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
+      const axisColor = isDark ? '#475569' : '#cbd5e1';
+
+      const padLeft = 70;
+      const padRight = 50;
+      const padTop = 40;
+      const padBottom = 50;
+      const plotW = w - padLeft - padRight;
+      const plotH = h - padTop - padBottom;
+
+      const maxStress = 1700; // MPa to accommodate UHSS Boro
+      const maxStrain = 0.35; // To accommodate ductile AISI 1020
+
+      function toX(eps) {
+        return padLeft + (eps / maxStrain) * plotW;
+      }
+      function toY(sig) {
+        return padTop + plotH - (sig / maxStress) * plotH;
+      }
+
+      // Draw Grid
+      compCtx.lineWidth = 1;
+      compCtx.strokeStyle = gridColor;
+      compCtx.fillStyle = textColor;
+      compCtx.font = "11px monospace";
+
+      for (let s = 0; s <= maxStress; s += 250) {
+        const y = toY(s);
+        compCtx.beginPath();
+        compCtx.moveTo(padLeft, y);
+        compCtx.lineTo(padLeft + plotW, y);
+        compCtx.stroke();
+        compCtx.textAlign = "right";
+        compCtx.fillText(s + " MPa", padLeft - 8, y + 4);
+      }
+
+      for (let e = 0; e <= maxStrain; e += 0.05) {
+        const x = toX(e);
+        compCtx.beginPath();
+        compCtx.moveTo(x, padTop);
+        compCtx.lineTo(x, padTop + plotH);
+        compCtx.stroke();
+        compCtx.textAlign = "center";
+        compCtx.fillText((e * 100).toFixed(0) + "%", x, padTop + plotH + 18);
+      }
+
+      // Axes
+      compCtx.strokeStyle = axisColor;
+      compCtx.lineWidth = 2;
+      compCtx.beginPath();
+      compCtx.moveTo(padLeft, padTop);
+      compCtx.lineTo(padLeft, padTop + plotH);
+      compCtx.lineTo(padLeft + plotW, padTop + plotH);
+      compCtx.stroke();
+
+      // Axis Titles
+      compCtx.fillStyle = textColor;
+      compCtx.font = "bold 13px sans-serif";
+      compCtx.save();
+      compCtx.translate(22, padTop + plotH / 2);
+      compCtx.rotate(-Math.PI / 2);
+      compCtx.textAlign = "center";
+      compCtx.fillText("Esfuerzo Tensil σ (MPa)", 0, 0);
+      compCtx.restore();
+
+      compCtx.textAlign = "center";
+      compCtx.fillText("Deformación Unitaria ε (%)", padLeft + plotW / 2, h - 12);
+
+      // Draw each material curve
+      Object.keys(MATERIALS).forEach(key => {
+        if (!activeCompareMats[key]) return;
+        const mat = MATERIALS[key];
+
+        compCtx.strokeStyle = mat.color;
+        compCtx.lineWidth = 3;
+        compCtx.beginPath();
+        const steps = 150;
+        for (let i = 0; i <= steps; i++) {
+          const e = (i / steps) * mat.epsF;
+          const s = getStress(mat, e, false);
+          if (i === 0) compCtx.moveTo(toX(e), toY(s));
+          else compCtx.lineTo(toX(e), toY(s));
+        }
+        compCtx.stroke();
+
+        // Fracture marker
+        const fx = toX(mat.epsF);
+        const fy = toY(mat.sigF);
+        compCtx.fillStyle = mat.color;
+        compCtx.beginPath();
+        compCtx.arc(fx, fy, 4, 0, Math.PI * 2);
+        compCtx.fill();
+
+        // Material label at fracture or peak
+        compCtx.font = "bold 11px sans-serif";
+        compCtx.textAlign = "left";
+        compCtx.fillText(mat.tag, fx + 6, fy);
+      });
+    }
+
+    /* =========================================================================
+       10. AUTOMOTIVE SELECTION CHALLENGES (QUIZ MODULE)
+       ========================================================================= */
+    const QUIZ_QUESTIONS = [
+      {
+        question: "1. En un choque frontal a 64 km/h contra una barrera deformable (norma Euro NCAP), ¿qué propiedad mecánica del diagrama σ-ε es la más determinante para las punteras deformables (Crash Boxes) del chasis?",
+        options: [
+          "El mayor Módulo de Young (E) posible para que la puntera no se deforme en absoluto.",
+          "La Tenacidad Total (área total bajo la curva σ-ε), pues representa la máxima disipación de energía cinética mediante deformación plástica progresiva antes de la fractura.",
+          "El menor Límite de Fluencia posible para que el coche se arrugue con facilidad.",
+          "Una fractura frágil inmediata a 90° para que la pieza se desprenda rápidamente."
+        ],
+        correct: 1,
+        explanation: "¡Correcto! Las crash boxes son componentes de seguridad pasiva cuya misión es disipar la energía cinética del choque (\(E_k = \frac{1}{2}mv^2\)) convirtiéndola en trabajo plástico (\(W_p = \int \sigma d\epsilon\)). El acero DP600 es perfecto por su amplia área de tenacidad y capacidad de arrugarse como un fuelle sin fisuras catastróficas."
+      },
+      {
+        question: "2. Para la viga anti-intrusión transversal del pilar B (impacto lateral donde no hay espacio de deformación deformable para el tórax del pasajero), ¿cuál es el criterio primordial de selección de material?",
+        options: [
+          "Ultra Alto Límite de Fluencia (UHSS) como el Acero al Boro 22MnB5 para resistir la intrusión sin colapsar el habitáculo.",
+          "Un polímero sin reforzar como el PA66 para reducir peso al máximo.",
+          "Fundición gris GG25 para amortiguar el sonido del choque.",
+          "Acero dulce recocido con alargamiento del 40%."
+        ],
+        correct: 0,
+        explanation: "¡Exacto! En impacto lateral, la distancia entre la puerta y el pasajero es de escasos centímetros. La celda de habitáculo debe comportarse como una jaula indeformable. El acero al boro 22MnB5 conformado en caliente (\(\sigma_y > 1100\text{ MPa}\), UTS \(> 1500\text{ MPa}\)) evita que el poste o paragolpes penetre en la cabina."
+      },
+      {
+        question: "3. En el diseño de un resorte helicoidal para la suspensión delantera, ¿qué propiedad del diagrama esfuerzo-deformación cuantifica la energía elástica que puede almacenar y devolver el material sin sufrir ninguna deformación permanente?",
+        options: [
+          "La ductilidad (% de elongación a la rotura).",
+          "El Módulo de Resiliencia (\(U_r = \frac{\sigma_y^2}{2E}\)), que representa el área bajo la zona elástica del diagrama.",
+          "El coeficiente de dilatación térmica.",
+          "El esfuerzo de fractura (\(\sigma_f\))."
+        ],
+        correct: 1,
+        explanation: "¡Brillante! El resorte de suspensión absorbe energía en compresión y baches, debiendo recuperarla íntegramente de manera reversible (régimen elástico). Por eso se fabrican con aceros de resorte (ej. SAE 5160 o 9254) con muy alto límite de fluencia para maximizar la resiliencia elástica \(U_r\)."
+      },
+      {
+        question: "4. Si un ingeniero automotriz sustituye un brazo de suspensión inferior (A-arm) de acero estructural (\(E=210\text{ GPa}\)) por uno de aleación de aluminio AA6061-T6 (\(E=69\text{ GPa}\)), ¿qué consideración geométrica fundamental debe aplicar para mantener la misma rigidez elástica contra flexión?",
+        options: [
+          "Mantener exactamente las mismas dimensiones geométricas pues el aluminio es un metal.",
+          "Incrementar el momento de inercia (\(I\)) de la sección transversal (sección hueca o viga I más ancha) para compensar que el módulo elástico del aluminio es aproximadamente un tercio del acero.",
+          "Hacer la pieza mucho más delgada porque el aluminio tiene menor densidad.",
+          "Calentar la pieza a 900°C antes de montarla en el auto."
+        ],
+        correct: 1,
+        explanation: "¡Excelente! La rigidez a flexión depende del producto \(E \cdot I\). Dado que el módulo de Young del aluminio es solo 1/3 del acero, se debe aumentar la inercia geométrica \(I\). Aún aumentando la sección hueca, gracias a la baja densidad del aluminio (\(2.70\text{ g/cm}^3\) vs \(7.85\text{ g/cm}^3\)), se logra un ahorro neto de peso del 35-45% en masa no suspendida."
+      }
+    ];
+
+    let quizAnswers = {};
+
+    function initQuiz() {
+      const container = document.getElementById('quiz-container');
+      container.innerHTML = '';
+
+      QUIZ_QUESTIONS.forEach((q, idx) => {
+        const qCard = document.createElement('div');
+        qCard.className = "p-4 rounded-xl bg-[var(--background)] border border-[var(--border)] space-y-3";
+        qCard.innerHTML = `
+          <h4 class="font-bold text-xs sm:text-sm text-[var(--foreground)]">${q.question}</h4>
+          <div class="space-y-1.5" id="q-opts-${idx}">
+            ${q.options.map((opt, optIdx) => `
+              <button onclick="selectQuizAnswer(${idx}, ${optIdx})" class="w-full text-left p-2.5 rounded-lg border border-[var(--border)] bg-[var(--card)] hover:bg-[var(--border)] text-xs text-[var(--foreground)] transition-all flex items-start gap-2">
+                <span class="w-5 h-5 rounded-full border border-[var(--border)] flex items-center justify-center font-bold text-[11px] shrink-0 mt-0.5">
+                  ${String.fromCharCode(65 + optIdx)}
+                </span>
+                <span>${opt}</span>
+              </button>
+            `).join('')}
+          </div>
+          <div id="q-feedback-${idx}" class="hidden p-3 rounded-lg text-xs leading-relaxed"></div>
+        `;
+        container.appendChild(qCard);
+      });
+    }
+
+    function selectQuizAnswer(qIdx, optIdx) {
+      if (quizAnswers[qIdx] !== undefined) return; // already answered
+      quizAnswers[qIdx] = optIdx;
+
+      const q = QUIZ_QUESTIONS[qIdx];
+      const isCorrect = optIdx === q.correct;
+      const optsContainer = document.getElementById(`q-opts-${qIdx}`);
+      const feedbackEl = document.getElementById(`q-feedback-${qIdx}`);
+
+      // Style buttons
+      const buttons = optsContainer.querySelectorAll('button');
+      buttons.forEach((btn, idx) => {
+        if (idx === q.correct) {
+          btn.className = "w-full text-left p-2.5 rounded-lg border border-emerald-500 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold text-xs transition-all flex items-start gap-2";
+        } else if (idx === optIdx && !isCorrect) {
+          btn.className = "w-full text-left p-2.5 rounded-lg border border-red-500 bg-red-500/10 text-red-500 text-xs transition-all flex items-start gap-2";
+        } else {
+          btn.style.opacity = "0.5";
+        }
+      });
+
+      // Show feedback
+      feedbackEl.classList.remove('hidden');
+      if (isCorrect) {
+        feedbackEl.className = "p-3 rounded-lg text-xs leading-relaxed bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20";
+        feedbackEl.innerHTML = `<strong>¡Excelente deducción de ingeniería!</strong> ${q.explanation}`;
+      } else {
+        feedbackEl.className = "p-3 rounded-lg text-xs leading-relaxed bg-red-500/10 text-red-500 border border-red-500/20";
+        feedbackEl.innerHTML = `<strong>Respuesta incorrecta.</strong> ${q.explanation}`;
+      }
+
+      // Update score
+      let correctCount = 0;
+      Object.keys(quizAnswers).forEach(k => {
+        if (quizAnswers[k] === QUIZ_QUESTIONS[k].correct) correctCount++;
+      });
+      document.getElementById('quiz-score').textContent = `${correctCount} / ${QUIZ_QUESTIONS.length}`;
+    }
+
+    /* =========================================================================
+       11. NAVIGATION TAB SWITCHER
+       ========================================================================= */
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('bg-[var(--card)]', 'text-blue-600', 'dark:text-blue-400', 'shadow-xs');
+        btn.classList.add('text-[var(--muted-foreground)]');
+      });
+      document.getElementById('tab-' + tabId).classList.remove('text-[var(--muted-foreground)]');
+      document.getElementById('tab-' + tabId).classList.add('bg-[var(--card)]', 'text-blue-600', 'dark:text-blue-400', 'shadow-xs');
+
+      document.getElementById('view-lab').classList.add('hidden');
+      document.getElementById('view-compare').classList.add('hidden');
+      document.getElementById('view-theory').classList.add('hidden');
+      document.getElementById('view-quiz').classList.add('hidden');
+
+      document.getElementById('view-' + tabId).classList.remove('hidden');
+
+      if (tabId === 'compare') {
+        setTimeout(renderCompareGraph, 50);
+      } else if (tabId === 'lab') {
+        setTimeout(() => {
+          updateTelemetryAndDraw();
+        }, 50);
+      }
+    }
+
+    /* =========================================================================
+       12. INITIALIZATION ON LOAD
+       ========================================================================= */
+    window.addEventListener('DOMContentLoaded', () => {
+      initQuiz();
+      changeMaterial('dp600');
+    });
+
+    // Graph hover tooltip interaction
+    graphCanvas.addEventListener('mousemove', (e) => {
+      const rect = graphCanvas.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+
+      const padLeft = 65;
+      const padRight = 35;
+      const padTop = 30;
+      const padBottom = 45;
+      const plotW = graphCanvas.width - padLeft - padRight;
+      const plotH = graphCanvas.height - padTop - padBottom;
+
+      const maxStress = currentMatKey === 'boro' ? 1800 : (currentMatKey === 'pa66' ? 220 : 800);
+      const maxStrain = currentMatKey === 'aisi1020' ? 0.35 : (currentMatKey === 'boro' ? 0.10 : (currentMatKey === 'pa66' ? 0.05 : 0.25));
+
+      const tooltip = document.getElementById('graph-tooltip');
+
+      if (mouseX >= padLeft && mouseX <= padLeft + plotW && mouseY >= padTop && mouseY <= padTop + plotH) {
+        const strainVal = ((mouseX - padLeft) / plotW) * maxStrain;
+        const stressVal = getStress(currentMat, strainVal, false);
+
+        tooltip.classList.remove('hidden');
+        tooltip.style.left = `${mouseX + 15}px`;
+        tooltip.style.top = `${mouseY - 30}px`;
+        tooltip.innerHTML = `
+          <div><span class="text-[var(--muted-foreground)]">ε:</span> <strong>${(strainVal * 100).toFixed(2)}%</strong></div>
+          <div><span class="text-[var(--muted-foreground)]">σ:</span> <strong class="text-blue-500">${stressVal.toFixed(1)} MPa</strong></div>
+        `;
+      } else {
+        tooltip.classList.add('hidden');
+      }
+    });
+
+    graphCanvas.addEventListener('mouseleave', () => {
+      document.getElementById('graph-tooltip').classList.add('hidden');
+    });
+
+    // Window resize handler for canvas crispness
+    window.addEventListener('resize', () => {
+      updateTelemetryAndDraw();
+      if (!document.getElementById('view-compare').classList.contains('hidden')) {
+        renderCompareGraph();
+      }
+    });
+  </script>
+</body>
+</html>
